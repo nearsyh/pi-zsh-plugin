@@ -85,12 +85,29 @@ function _pi_shell_accept_original_line() {
     zle accept-line
 }
 
+function _pi_shell_prompt_with_history() {
+    local prompt="$1"
+    local history_context
+
+    history_context="$(_pi_history_recent_context)"
+    if [[ -z "$history_context" ]]; then
+        REPLY="$prompt"
+        return 0
+    fi
+
+    REPLY="${history_context}
+
+User prompt:
+${prompt}"
+}
+
 function _pi_shell_send_prompt() {
     local prompt="$1"
     local -a cmd
     _pi_shell_print_cmd || return 1
     cmd=(${reply[@]})
-    cmd+=("$prompt")
+    _pi_shell_prompt_with_history "$prompt"
+    cmd+=("$REPLY")
     "${cmd[@]}"
 }
 

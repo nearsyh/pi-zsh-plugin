@@ -13,6 +13,9 @@ source "${0:A:h}/lib/highlight.zsh"
 # Core utilities (includes logging)
 source "${0:A:h}/lib/helpers.zsh"
 
+# Shell command history capture
+source "${0:A:h}/lib/history.zsh"
+
 # Pending prompt dispatch outside ZLE
 source "${0:A:h}/lib/pending.zsh"
 
