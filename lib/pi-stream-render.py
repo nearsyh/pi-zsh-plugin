@@ -10,6 +10,7 @@ Flags:
 
 import json
 import os
+import pty
 import shutil
 import subprocess
 import sys
@@ -22,10 +23,16 @@ PI_SHOW_THINKING = os.environ.get("PI_SHOW_THINKING", "true").lower() not in (
 )
 TEXT_ONLY = "--text-only" in sys.argv
 GLOW_BIN = shutil.which("glow")
+_GLOW_STYLE_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "markdown-style.json"
+)
 
 
 def _detect_glow_style():
     """Pick glow style based on terminal background color."""
+    # Custom style uses standard ANSI colors that work on both light/dark
+    if os.path.isfile(_GLOW_STYLE_PATH):
+        return _GLOW_STYLE_PATH
     colorfgbg = os.environ.get("COLORFGBG", "")
     if colorfgbg:
         try:
@@ -87,15 +94,31 @@ def _render_markdown(content):
     if not GLOW_BIN:
         return content
     try:
-        result = subprocess.run(
+        master, slave = pty.openpty()
+        proc = subprocess.Popen(
             [GLOW_BIN, "-s", GLOW_STYLE],
-            input=content,
-            capture_output=True,
-            text=True,
-            timeout=5,
+            stdin=subprocess.PIPE,
+            stdout=slave,
+            stderr=slave,
+            env={
+                **os.environ,
+                "TERM": os.environ.get("TERM", "xterm-256color"),
+            },
         )
-        if result.returncode == 0 and result.stdout.strip():
-            return result.stdout
+        os.close(slave)
+        proc.stdin.write(content.encode())
+        proc.stdin.close()
+        output = b""
+        while True:
+            chunk = os.read(master, 4096)
+            if not chunk:
+                break
+            output += chunk
+        os.close(master)
+        proc.wait(timeout=5)
+        decoded = output.decode("utf-8", errors="replace")
+        if proc.returncode == 0 and decoded.strip():
+            return decoded
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         pass
     return content
