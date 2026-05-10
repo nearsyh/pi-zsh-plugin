@@ -77,6 +77,29 @@ function _forge_exec_interactive() {
     "${cmd[@]}" </dev/tty >/dev/tty
 }
 
+function _pi_shell_command_line() {
+    local -a cmd
+    cmd=("$@")
+    REPLY="${(j: :)${(@q)cmd}}"
+}
+
+function _pi_shell_accept_command() {
+    _pi_shell_command_line "$@"
+    BUFFER="$REPLY"
+    CURSOR=${#BUFFER}
+    _PI_SHELL_ACCEPTED_LINE=1
+    zle accept-line
+}
+
+function _pi_shell_accept_prompt_as_command() {
+    local prompt="$1"
+    local -a cmd
+    _pi_shell_print_cmd || return 1
+    cmd=(${reply[@]})
+    cmd+=("$prompt")
+    _pi_shell_accept_command "${cmd[@]}"
+}
+
 function _pi_shell_send_prompt() {
     local prompt="$1"
     local -a cmd

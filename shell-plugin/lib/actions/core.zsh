@@ -8,11 +8,10 @@ function _forge_action_new() {
     _pi_shell_clear_session
     _FORGE_ACTIVE_AGENT="pi"
 
-    echo
-
     if [[ -n "$input_text" ]]; then
-        _pi_shell_send_prompt "$input_text"
+        _pi_shell_accept_prompt_as_command "$input_text"
     else
+        echo
         _forge_log success "Started new pi session"
     fi
 }
@@ -64,12 +63,11 @@ function _forge_handle_conversation_command() {
     local command_text="$1"
     shift
 
-    echo
-
     if [[ -z "$_PI_SHELL_SESSION_FILE" ]]; then
+        echo
         _forge_log error "No active session. Start a session first."
         return 0
     fi
 
-    _pi_shell_send_prompt "$command_text $*"
+    _pi_shell_accept_prompt_as_command "$command_text $*"
 }

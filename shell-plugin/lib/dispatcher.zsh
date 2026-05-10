@@ -14,8 +14,7 @@ function _forge_action_default() {
         return 0
     fi
 
-    echo
-    _pi_shell_send_prompt "$input_text"
+    _pi_shell_accept_prompt_as_command "$input_text"
 }
 
 function forge-accept-line() {
@@ -37,10 +36,6 @@ function forge-accept-line() {
         zle accept-line
         return
     fi
-
-    print -s -- "$original_buffer"
-    CURSOR=${#BUFFER}
-    zle redisplay
 
     case "$user_action" in
         ask|plan)
@@ -160,6 +155,13 @@ function forge-accept-line() {
     esac
 
     local action_status=$?
+
+    if [[ -n "$_PI_SHELL_ACCEPTED_LINE" ]]; then
+        _PI_SHELL_ACCEPTED_LINE=""
+        return $action_status
+    fi
+
+    print -s -- "$original_buffer"
     _forge_osc133_emit "D;$action_status"
     _forge_osc133_emit "A"
 

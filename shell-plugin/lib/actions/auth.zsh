@@ -3,11 +3,9 @@
 # Authentication action handlers for pi
 
 function _forge_action_login() {
-    echo
-    _pi_shell_send_prompt "/login"
+    _pi_shell_accept_prompt_as_command "/login"
 }
 
 function _forge_action_logout() {
-    echo
-    _pi_shell_send_prompt "/logout"
+    _pi_shell_accept_prompt_as_command "/logout"
 }
