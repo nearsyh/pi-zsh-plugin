@@ -170,6 +170,8 @@ def render_stream(infile, outfile):
             elif inner_type == "thinking_delta":
                 if PI_SHOW_THINKING and not TEXT_ONLY:
                     delta = msg_event.get("delta", "")
+                    if thinking_buffer == "":
+                        thinking_buffer = "Thinking: "
                     if GLOW_BIN:
                         thinking_buffer += delta
                     else:
@@ -184,7 +186,7 @@ def render_stream(infile, outfile):
                         spinner.stop()
                         spinner.label = SPINNER_LABEL
                         rendered = _render_markdown(thinking_buffer)
-                        outfile.write(DIM + rendered + RESET + "\n")
+                        outfile.write(DIM + rendered + RESET)
                         thinking_buffer = ""
                     else:
                         outfile.write(RESET + "\n\n")
@@ -199,7 +201,7 @@ def render_stream(infile, outfile):
                     if GLOW_BIN and thinking_buffer:
                         spinner.stop()
                         rendered = _render_markdown(thinking_buffer)
-                        outfile.write(DIM + rendered + RESET + "\n\n")
+                        outfile.write(DIM + rendered + RESET)
                         thinking_buffer = ""
                     else:
                         outfile.write(RESET + "\n\n")
