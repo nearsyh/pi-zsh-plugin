@@ -107,9 +107,21 @@ function _pi_shell_send_prompt() {
     local -a cmd
     _pi_shell_print_cmd || return 1
     cmd=(${reply[@]})
+    cmd+=(--mode json)
     _pi_shell_prompt_with_history "$prompt"
     cmd+=("$REPLY")
-    "${cmd[@]}"
+    "${cmd[@]}" | python3 "${_PI_PLUGIN_DIR}/lib/pi-stream-render.py"
+}
+
+function _pi_shell_capture_text() {
+    local prompt="$1"
+    local -a cmd
+    _pi_shell_print_cmd || return 1
+    cmd=(${reply[@]})
+    cmd+=(--mode json)
+    _pi_shell_prompt_with_history "$prompt"
+    cmd+=("$REPLY")
+    "${cmd[@]}" | python3 "${_PI_PLUGIN_DIR}/lib/pi-stream-render.py" --text-only
 }
 
 function _pi_reset() {

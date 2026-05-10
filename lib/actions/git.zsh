@@ -9,7 +9,7 @@ function _pi_action_commit() {
 
     echo
     local commit_message
-    commit_message=$(_pi_shell_send_prompt "$prompt")
+    commit_message=$(_pi_shell_capture_text "$prompt")
 
     if [[ -n "$commit_message" ]]; then
         git commit -m "$commit_message"
@@ -27,7 +27,7 @@ function _pi_action_commit_preview() {
 
     echo
     local commit_message
-    commit_message=$(_pi_shell_send_prompt "$prompt")
+    commit_message=$(_pi_shell_capture_text "$prompt")
 
     if [[ -n "$commit_message" ]]; then
         if git diff --staged --quiet; then

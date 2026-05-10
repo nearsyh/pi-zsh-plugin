@@ -4,6 +4,8 @@
 
 # Modular pi shell plugin - sources all required modules
 
+typeset -h _PI_PLUGIN_DIR="${0:A:h}"
+
 # Configuration variables
 source "${0:A:h}/lib/config.zsh"
 
