@@ -124,15 +124,56 @@ def _render_markdown(content):
     return content
 
 
+def _flush_thinking(outfile, state):
+    """Flush buffered thinking content to output."""
+    if not state["thinking_shown"]:
+        return
+    if GLOW_BIN and state["thinking_buffer"]:
+        spinner = state["spinner"]
+        spinner.stop()
+        spinner.label = SPINNER_LABEL
+        rendered = _render_markdown(state["thinking_buffer"])
+        outfile.write(DIM + rendered + RESET)
+        state["thinking_buffer"] = ""
+    else:
+        outfile.write(RESET + "\n\n")
+    outfile.flush()
+    state["thinking_shown"] = False
+    state["in_thinking"] = False
+
+
+def _flush_text(outfile, state):
+    """Flush buffered text content to output."""
+    if TEXT_ONLY:
+        return
+    if GLOW_BIN and state["text_buffer"]:
+        state["spinner"].stop()
+        state["spinner"].label = SPINNER_LABEL
+        rendered = _render_markdown(state["text_buffer"])
+        outfile.write(rendered)
+        if not rendered.endswith("\n"):
+            outfile.write("\n")
+        state["text_buffer"] = ""
+    elif state.get("text_started") and not state.get("text_end_content", "").endswith(
+        "\n"
+    ):
+        outfile.write("\n")
+    outfile.flush()
+
+
 def render_stream(infile, outfile):
-    in_thinking = False
-    thinking_shown = False
-    thinking_buffer = ""
-    turns = 0
-    text_started = False
-    text_buffer = ""
-    last_text_end_content = None
     spinner = Spinner(outfile)
+    state = {
+        "in_thinking": False,
+        "thinking_shown": False,
+        "thinking_buffer": "",
+        "text_started": False,
+        "text_buffer": "",
+        "text_end_content": "",
+        "spinner": spinner,
+    }
+    turns = 0
+    last_text_end_content = None
     spinner.start()
 
     for line in infile:
@@ -158,7 +199,7 @@ def render_stream(infile, outfile):
 
             if inner_type == "thinking_start":
                 spinner.stop()
-                in_thinking = True
+                state["in_thinking"] = True
                 if PI_SHOW_THINKING and not TEXT_ONLY:
                     if GLOW_BIN:
                         spinner.label = " Thinking ..."
@@ -170,44 +211,25 @@ def render_stream(infile, outfile):
             elif inner_type == "thinking_delta":
                 if PI_SHOW_THINKING and not TEXT_ONLY:
                     delta = msg_event.get("delta", "")
-                    if thinking_buffer == "":
-                        thinking_buffer = "Thinking: "
+                    if state["thinking_buffer"] == "":
+                        state["thinking_buffer"] = "Thinking: "
                     if GLOW_BIN:
-                        thinking_buffer += delta
+                        state["thinking_buffer"] += delta
                     else:
                         outfile.write(delta)
                         outfile.flush()
-                    thinking_shown = True
+                    state["thinking_shown"] = True
 
             elif inner_type == "thinking_end":
-                in_thinking = False
-                if thinking_shown and not TEXT_ONLY:
-                    if GLOW_BIN and thinking_buffer:
-                        spinner.stop()
-                        spinner.label = SPINNER_LABEL
-                        rendered = _render_markdown(thinking_buffer)
-                        outfile.write(DIM + rendered + RESET)
-                        thinking_buffer = ""
-                    else:
-                        outfile.write(RESET + "\n\n")
-                    outfile.flush()
-                    thinking_shown = False
+                if state["thinking_shown"] and not TEXT_ONLY:
+                    _flush_thinking(outfile, state)
                 spinner.start()
 
             elif inner_type == "text_start":
                 spinner.stop()
                 # End thinking mode when text content begins
-                if in_thinking and thinking_shown and not TEXT_ONLY:
-                    if GLOW_BIN and thinking_buffer:
-                        spinner.stop()
-                        rendered = _render_markdown(thinking_buffer)
-                        outfile.write(DIM + rendered + RESET)
-                        thinking_buffer = ""
-                    else:
-                        outfile.write(RESET + "\n\n")
-                    outfile.flush()
-                    thinking_shown = False
-                    in_thinking = False
+                if state["in_thinking"] and state["thinking_shown"] and not TEXT_ONLY:
+                    _flush_thinking(outfile, state)
                 # Show receiving indicator when buffering for glow
                 if GLOW_BIN and not TEXT_ONLY:
                     spinner.label = " Receiving ..."
@@ -215,10 +237,10 @@ def render_stream(infile, outfile):
 
             elif inner_type == "text_delta":
                 if not TEXT_ONLY:
-                    text_started = True
+                    state["text_started"] = True
                     delta = msg_event.get("delta", "")
                     if GLOW_BIN:
-                        text_buffer += delta
+                        state["text_buffer"] += delta
                     else:
                         outfile.write(delta)
                         outfile.flush()
@@ -227,18 +249,9 @@ def render_stream(infile, outfile):
                 content = msg_event.get("content", "")
                 if TEXT_ONLY:
                     last_text_end_content = content
-                elif text_started:
-                    if GLOW_BIN and text_buffer:
-                        spinner.stop()
-                        spinner.label = SPINNER_LABEL
-                        rendered = _render_markdown(text_buffer)
-                        outfile.write(rendered)
-                        if not rendered.endswith("\n"):
-                            outfile.write("\n")
-                        text_buffer = ""
-                    elif content and not content.endswith("\n"):
-                        outfile.write("\n")
-                    outfile.flush()
+                elif state["text_started"] and not TEXT_ONLY:
+                    state["text_end_content"] = content
+                    _flush_text(outfile, state)
                 spinner.start()
 
         elif event_type == "tool_execution_start" and not TEXT_ONLY:
