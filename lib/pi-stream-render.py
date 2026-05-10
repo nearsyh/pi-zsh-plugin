@@ -10,6 +10,8 @@ Flags:
 
 import json
 import os
+import shutil
+import subprocess
 import sys
 import threading
 
@@ -19,6 +21,7 @@ PI_SHOW_THINKING = os.environ.get("PI_SHOW_THINKING", "true").lower() not in (
     "no",
 )
 TEXT_ONLY = "--text-only" in sys.argv
+GLOW_BIN = shutil.which("glow")
 
 DIM = "\033[90m"
 RESET = "\033[0m"
@@ -34,6 +37,7 @@ class Spinner:
         self._stop = threading.Event()
         self._thread = None
         self.active = False
+        self.label = SPINNER_LABEL
 
     def start(self):
         if self.active or TEXT_ONLY:
@@ -47,7 +51,7 @@ class Spinner:
         i = 0
         while not self._stop.wait(0.08):
             frame = SPINNER_FRAMES[i % len(SPINNER_FRAMES)]
-            self.outfile.write(f"\r\033[94m{frame}{SPINNER_LABEL}{RESET}")
+            self.outfile.write(f"\r\033[94m{frame}{self.label}{RESET}")
             self.outfile.flush()
             i += 1
 
@@ -63,11 +67,32 @@ class Spinner:
         self.outfile.flush()
 
 
+def _render_markdown(content):
+    """Render markdown content via glow, falling back to plain text."""
+    if not GLOW_BIN:
+        return content
+    try:
+        result = subprocess.run(
+            [GLOW_BIN, "-s", "dark"],
+            input=content,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        pass
+    return content
+
+
 def render_stream(infile, outfile):
     in_thinking = False
     thinking_shown = False
+    thinking_buffer = ""
     turns = 0
     text_started = False
+    text_buffer = ""
     last_text_end_content = None
     spinner = Spinner(outfile)
     spinner.start()
@@ -97,20 +122,34 @@ def render_stream(infile, outfile):
                 spinner.stop()
                 in_thinking = True
                 if PI_SHOW_THINKING and not TEXT_ONLY:
-                    outfile.write(DIM)
-                    outfile.flush()
+                    if GLOW_BIN:
+                        spinner.label = " Thinking ..."
+                        spinner.start()
+                    else:
+                        outfile.write(DIM)
+                        outfile.flush()
 
             elif inner_type == "thinking_delta":
                 if PI_SHOW_THINKING and not TEXT_ONLY:
                     delta = msg_event.get("delta", "")
-                    outfile.write(delta)
-                    outfile.flush()
+                    if GLOW_BIN:
+                        thinking_buffer += delta
+                    else:
+                        outfile.write(delta)
+                        outfile.flush()
                     thinking_shown = True
 
             elif inner_type == "thinking_end":
                 in_thinking = False
                 if thinking_shown and not TEXT_ONLY:
-                    outfile.write(RESET + "\n\n")
+                    if GLOW_BIN and thinking_buffer:
+                        spinner.stop()
+                        spinner.label = SPINNER_LABEL
+                        rendered = _render_markdown(thinking_buffer)
+                        outfile.write(DIM + rendered + RESET + "\n")
+                        thinking_buffer = ""
+                    else:
+                        outfile.write(RESET + "\n\n")
                     outfile.flush()
                     thinking_shown = False
                 spinner.start()
@@ -119,24 +158,45 @@ def render_stream(infile, outfile):
                 spinner.stop()
                 # End thinking mode when text content begins
                 if in_thinking and thinking_shown and not TEXT_ONLY:
-                    outfile.write(RESET + "\n\n")
+                    if GLOW_BIN and thinking_buffer:
+                        spinner.stop()
+                        rendered = _render_markdown(thinking_buffer)
+                        outfile.write(DIM + rendered + RESET + "\n\n")
+                        thinking_buffer = ""
+                    else:
+                        outfile.write(RESET + "\n\n")
                     outfile.flush()
                     thinking_shown = False
                     in_thinking = False
+                # Show receiving indicator when buffering for glow
+                if GLOW_BIN and not TEXT_ONLY:
+                    spinner.label = " Receiving ..."
+                    spinner.start()
 
             elif inner_type == "text_delta":
                 if not TEXT_ONLY:
                     text_started = True
                     delta = msg_event.get("delta", "")
-                    outfile.write(delta)
-                    outfile.flush()
+                    if GLOW_BIN:
+                        text_buffer += delta
+                    else:
+                        outfile.write(delta)
+                        outfile.flush()
 
             elif inner_type == "text_end":
                 content = msg_event.get("content", "")
                 if TEXT_ONLY:
                     last_text_end_content = content
                 elif text_started:
-                    if content and not content.endswith("\n"):
+                    if GLOW_BIN and text_buffer:
+                        spinner.stop()
+                        spinner.label = SPINNER_LABEL
+                        rendered = _render_markdown(text_buffer)
+                        outfile.write(rendered)
+                        if not rendered.endswith("\n"):
+                            outfile.write("\n")
+                        text_buffer = ""
+                    elif content and not content.endswith("\n"):
                         outfile.write("\n")
                     outfile.flush()
                 spinner.start()
