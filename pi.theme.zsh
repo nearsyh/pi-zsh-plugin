@@ -10,7 +10,7 @@ function _pi_prompt_info() {
     local model_part="${_model:+ ${_model}}"
     local session_part="${_PI_SHELL_SESSION_FILE:t}"
     [[ -n "$session_part" ]] && session_part=" ${session_part}"
-    echo "%F{cyan}π%f%F{244}${model_part}${session_part}%f"
+    echo "%F{cyan}π%f%F{244}${model_part}%f"
 }
 
 # Right prompt: pi session info
