@@ -24,6 +24,21 @@ PI_SHOW_THINKING = os.environ.get("PI_SHOW_THINKING", "true").lower() not in (
 TEXT_ONLY = "--text-only" in sys.argv
 GLOW_BIN = shutil.which("glow")
 
+
+def _detect_glow_style():
+    """Pick glow style based on terminal background color."""
+    colorfgbg = os.environ.get("COLORFGBG", "")
+    if colorfgbg:
+        try:
+            bg = int(colorfgbg.split(";")[-1])
+            return "light" if bg >= 8 else "dark"
+        except (ValueError, IndexError):
+            pass
+    return "dark"
+
+
+GLOW_STYLE = _detect_glow_style()
+
 DIM = "\033[90m"
 RESET = "\033[0m"
 SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
@@ -75,7 +90,7 @@ def _render_markdown(content):
     try:
         master, slave = pty.openpty()
         proc = subprocess.Popen(
-            [GLOW_BIN],
+            [GLOW_BIN, "-s", GLOW_STYLE],
             stdin=subprocess.PIPE,
             stdout=slave,
             stderr=slave,
