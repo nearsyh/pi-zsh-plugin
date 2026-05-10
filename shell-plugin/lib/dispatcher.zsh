@@ -2,7 +2,7 @@
 
 # Main command dispatcher and widget registration for pi
 
-function _forge_action_default() {
+function _pi_action_default() {
     local user_action="$1"
     local input_text="$2"
 
@@ -18,7 +18,7 @@ function _forge_action_default() {
     _pi_shell_accept_original_line
 }
 
-function forge-accept-line() {
+function pi-accept-line() {
     local original_buffer="$BUFFER"
     local user_action=""
     local input_text=""
@@ -44,8 +44,8 @@ function forge-accept-line() {
         ;;
     esac
 
-    _forge_osc133_emit "B"
-    _forge_osc133_emit "C"
+    _pi_osc133_emit "B"
+    _pi_osc133_emit "C"
 
     case "$user_action" in
         new|n)
@@ -53,102 +53,102 @@ function forge-accept-line() {
                 _pi_shell_set_pending_action "$user_action" "$input_text"
                 _pi_shell_accept_original_line
             else
-                _forge_action_new "$input_text"
+                _pi_action_new "$input_text"
             fi
         ;;
         info|i|session)
-            _forge_action_info
+            _pi_action_info
         ;;
         dump|d|export)
-            _forge_action_dump "$input_text"
+            _pi_action_dump "$input_text"
         ;;
         compact)
             _pi_shell_set_pending_action "$user_action" "$input_text"
             _pi_shell_accept_original_line
         ;;
         retry|r)
-            _forge_action_retry
+            _pi_action_retry
         ;;
         help)
-            _forge_action_help
+            _pi_action_help
         ;;
         agent|a)
-            _forge_action_agent "$input_text"
+            _pi_action_agent "$input_text"
         ;;
         conversation|c|resume)
-            _forge_action_conversation "$input_text"
+            _pi_action_conversation "$input_text"
         ;;
         config-model|cm|model|m)
-            _forge_action_session_model "$input_text"
+            _pi_action_session_model "$input_text"
         ;;
         provider)
-            _forge_action_session_provider "$input_text"
+            _pi_action_session_provider "$input_text"
         ;;
         config-reload|cr|model-reset|mr)
-            _forge_action_config_reload
+            _pi_action_config_reload
         ;;
         reasoning-effort|re|thinking)
-            _forge_action_reasoning_effort "$input_text"
+            _pi_action_reasoning_effort "$input_text"
         ;;
         config-reasoning-effort|cre)
-            _forge_action_config_reasoning_effort "$input_text"
+            _pi_action_config_reasoning_effort "$input_text"
         ;;
         config-commit-model|ccm)
-            _forge_action_commit_model "$input_text"
+            _pi_action_commit_model "$input_text"
         ;;
         config-suggest-model|csm)
-            _forge_action_suggest_model "$input_text"
+            _pi_action_suggest_model "$input_text"
         ;;
         tools|t)
-            _forge_action_tools
+            _pi_action_tools
         ;;
         config|env|e|settings)
-            _forge_action_config
+            _pi_action_config
         ;;
         config-edit|ce)
-            _forge_action_config_edit
+            _pi_action_config_edit
         ;;
         skill)
-            _forge_action_skill
+            _pi_action_skill
         ;;
         edit|ed)
-            _forge_action_editor "$input_text"
+            _pi_action_editor "$input_text"
             local action_status=$?
-            _forge_osc133_emit "D;$action_status"
-            _forge_osc133_emit "A"
+            _pi_osc133_emit "D;$action_status"
+            _pi_osc133_emit "A"
             return $action_status
         ;;
         commit)
-            _forge_action_commit "$input_text"
+            _pi_action_commit "$input_text"
         ;;
         commit-preview)
-            _forge_action_commit_preview "$input_text"
+            _pi_action_commit_preview "$input_text"
             local action_status=$?
-            _forge_osc133_emit "D;$action_status"
-            _forge_osc133_emit "A"
+            _pi_osc133_emit "D;$action_status"
+            _pi_osc133_emit "A"
             return $action_status
         ;;
         suggest|s)
-            _forge_action_suggest "$input_text"
+            _pi_action_suggest "$input_text"
             local action_status=$?
-            _forge_osc133_emit "D;$action_status"
-            _forge_osc133_emit "A"
+            _pi_osc133_emit "D;$action_status"
+            _pi_osc133_emit "A"
             return $action_status
         ;;
         clone)
-            _forge_action_clone "$input_text"
+            _pi_action_clone "$input_text"
         ;;
         rename|rn)
-            _forge_action_rename "$input_text"
+            _pi_action_rename "$input_text"
         ;;
         conversation-rename)
-            _forge_action_conversation_rename "$input_text"
+            _pi_action_conversation_rename "$input_text"
         ;;
         copy)
-            _forge_action_copy
+            _pi_action_copy
         ;;
         workspace-sync|sync|workspace-init|sync-init|workspace-status|sync-status|workspace-info|sync-info)
-            _forge_action_sync
+            _pi_action_sync
         ;;
         provider-login|login)
             _pi_shell_set_pending_action "$user_action" "$input_text"
@@ -159,7 +159,7 @@ function forge-accept-line() {
             _pi_shell_accept_original_line
         ;;
         *)
-            _forge_action_default "$user_action" "$input_text"
+            _pi_action_default "$user_action" "$input_text"
         ;;
     esac
 
@@ -171,9 +171,9 @@ function forge-accept-line() {
     fi
 
     print -s -- "$original_buffer"
-    _forge_osc133_emit "D;$action_status"
-    _forge_osc133_emit "A"
+    _pi_osc133_emit "D;$action_status"
+    _pi_osc133_emit "A"
 
-    _forge_reset
+    _pi_reset
     return $action_status
 }

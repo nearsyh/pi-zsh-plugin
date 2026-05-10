@@ -2,7 +2,7 @@
 
 # Git integration action handlers for pi
 
-function _forge_action_commit() {
+function _pi_action_commit() {
     local additional_context="$1"
     local prompt="Write a concise git commit message for the current staged changes. Output only the commit message."
     [[ -n "$additional_context" ]] && prompt+=" Extra context: ${additional_context}"
@@ -14,13 +14,13 @@ function _forge_action_commit() {
     if [[ -n "$commit_message" ]]; then
         git commit -m "$commit_message"
     else
-        _forge_log error "Failed to generate commit message"
+        _pi_log error "Failed to generate commit message"
     fi
 
-    _forge_reset
+    _pi_reset
 }
 
-function _forge_action_commit_preview() {
+function _pi_action_commit_preview() {
     local additional_context="$1"
     local prompt="Write a concise git commit message for the current changes. Output only the commit message."
     [[ -n "$additional_context" ]] && prompt+=" Extra context: ${additional_context}"
@@ -38,6 +38,6 @@ function _forge_action_commit_preview() {
         CURSOR=${#BUFFER}
         zle reset-prompt
     else
-        _forge_reset
+        _pi_reset
     fi
 }

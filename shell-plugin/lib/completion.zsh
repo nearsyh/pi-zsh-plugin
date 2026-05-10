@@ -2,7 +2,7 @@
 
 # Custom completion widget that handles both :commands and @ completion
 
-function forge-completion() {
+function pi-completion() {
     local current_word="${LBUFFER##* }"
     
     # Handle @ completion (files and directories)
@@ -11,7 +11,7 @@ function forge-completion() {
         local selected
         
         # Use Rust's built-in file picker
-        selected=$(_forge_select_with_query "$filter_text" file)
+        selected=$(_pi_select_with_query "$filter_text" file)
         
         if [[ -n "$selected" ]]; then
             selected="@[${selected}]"
@@ -31,7 +31,7 @@ function forge-completion() {
         
         # Use Rust's built-in command picker
         local selected
-        selected=$(_forge_select_with_query "$filter_text" command)
+        selected=$(_pi_select_with_query "$filter_text" command)
         
         if [[ -n "$selected" ]]; then
             # Replace the current buffer with the selected command

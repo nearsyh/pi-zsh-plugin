@@ -37,4 +37,4 @@ source "${0:A:h}/lib/dispatcher.zsh"
 # Key bindings and widget registration
 source "${0:A:h}/lib/bindings.zsh"
 
-_FORGE_PLUGIN_LOADED=1
+_PI_PLUGIN_LOADED=1

@@ -1,13 +1,12 @@
 #!/usr/bin/env zsh
 
 # Core utility functions for pi shell plugin.
-# Function names keep the old _forge_* prefix to minimise churn.
 
-function _forge_get_commands() {
-    if [[ -z "$_FORGE_COMMANDS" ]]; then
-        _FORGE_COMMANDS=$'new\ninfo\nsession\nresume\nmodel\nscoped-models\nsettings\nlogin\nlogout\ncopy\ncompact\nexport\nhelp\nedit\nsuggest'
+function _pi_get_commands() {
+    if [[ -z "$_PI_COMMANDS" ]]; then
+        _PI_COMMANDS=$'new\ninfo\nsession\nresume\nmodel\nscoped-models\nsettings\nlogin\nlogout\ncopy\ncompact\nexport\nhelp\nedit\nsuggest'
     fi
-    echo "$_FORGE_COMMANDS"
+    echo "$_PI_COMMANDS"
 }
 
 function _pi_shell_ensure_session_file() {
@@ -16,14 +15,14 @@ function _pi_shell_ensure_session_file() {
     fi
 
     mkdir -p "$_PI_SHELL_SESSION_DIR" || {
-        _forge_log error "Failed to create session directory: $_PI_SHELL_SESSION_DIR"
+        _pi_log error "Failed to create session directory: $_PI_SHELL_SESSION_DIR"
         return 1
     }
 
     local timestamp
     timestamp="$(date '+%Y%m%d-%H%M%S')"
     _PI_SHELL_SESSION_FILE="${_PI_SHELL_SESSION_DIR}/${timestamp}-$$.jsonl"
-    _FORGE_CONVERSATION_ID="$_PI_SHELL_SESSION_FILE"
+    _PI_CONVERSATION_ID="$_PI_SHELL_SESSION_FILE"
 }
 
 function _pi_shell_set_session_file() {
@@ -32,27 +31,27 @@ function _pi_shell_set_session_file() {
 
     if [[ -n "$_PI_SHELL_SESSION_FILE" && "$_PI_SHELL_SESSION_FILE" != "$session_file" ]]; then
         _PI_SHELL_PREVIOUS_SESSION_FILE="$_PI_SHELL_SESSION_FILE"
-        _FORGE_PREVIOUS_CONVERSATION_ID="$_PI_SHELL_SESSION_FILE"
+        _PI_PREVIOUS_CONVERSATION_ID="$_PI_SHELL_SESSION_FILE"
     fi
 
     _PI_SHELL_SESSION_FILE="$session_file"
-    _FORGE_CONVERSATION_ID="$session_file"
+    _PI_CONVERSATION_ID="$session_file"
 }
 
 function _pi_shell_clear_session() {
     if [[ -n "$_PI_SHELL_SESSION_FILE" ]]; then
         _PI_SHELL_PREVIOUS_SESSION_FILE="$_PI_SHELL_SESSION_FILE"
-        _FORGE_PREVIOUS_CONVERSATION_ID="$_PI_SHELL_SESSION_FILE"
+        _PI_PREVIOUS_CONVERSATION_ID="$_PI_SHELL_SESSION_FILE"
     fi
     _PI_SHELL_SESSION_FILE=""
-    _FORGE_CONVERSATION_ID=""
+    _PI_CONVERSATION_ID=""
 }
 
 function _pi_shell_base_cmd() {
-    reply=($_FORGE_BIN)
-    [[ -n "$_FORGE_SESSION_PROVIDER" ]] && reply+=(--provider "$_FORGE_SESSION_PROVIDER")
-    [[ -n "$_FORGE_SESSION_MODEL" ]] && reply+=(--model "$_FORGE_SESSION_MODEL")
-    [[ -n "$_FORGE_SESSION_REASONING_EFFORT" ]] && reply+=(--thinking "$_FORGE_SESSION_REASONING_EFFORT")
+    reply=($_PI_SHELL_BIN)
+    [[ -n "$_PI_SESSION_PROVIDER" ]] && reply+=(--provider "$_PI_SESSION_PROVIDER")
+    [[ -n "$_PI_SESSION_MODEL" ]] && reply+=(--model "$_PI_SESSION_MODEL")
+    [[ -n "$_PI_SESSION_REASONING_EFFORT" ]] && reply+=(--thinking "$_PI_SESSION_REASONING_EFFORT")
 }
 
 function _pi_shell_print_cmd() {
@@ -61,7 +60,7 @@ function _pi_shell_print_cmd() {
     reply+=(--session "$_PI_SHELL_SESSION_FILE" -p)
 }
 
-function _forge_exec() {
+function _pi_exec() {
     local -a cmd
     _pi_shell_base_cmd
     cmd=(${reply[@]})
@@ -69,7 +68,7 @@ function _forge_exec() {
     "${cmd[@]}"
 }
 
-function _forge_exec_interactive() {
+function _pi_exec_interactive() {
     local -a cmd
     _pi_shell_print_cmd || return 1
     cmd=(${reply[@]})
@@ -97,13 +96,13 @@ function _pi_shell_send_prompt() {
     "${cmd[@]}"
 }
 
-function _forge_select() {
+function _pi_select() {
     case "$1" in
         command)
-            _forge_get_commands
+            _pi_get_commands
         ;;
         model)
-            $_FORGE_BIN --list-models "${2:-}" 2>/dev/null
+            $_PI_SHELL_BIN --list-models "${2:-}" 2>/dev/null
         ;;
         *)
             return 1
@@ -111,20 +110,20 @@ function _forge_select() {
     esac
 }
 
-function _forge_select_global() {
-    _forge_select "$@"
+function _pi_select_global() {
+    _pi_select "$@"
 }
 
-function _forge_select_with_query() {
+function _pi_select_with_query() {
     local query="$1"
     shift
 
     case "$1" in
         command)
-            _forge_get_commands | grep -i -- "$query" | head -n 1
+            _pi_get_commands | grep -i -- "$query" | head -n 1
         ;;
         model)
-            $_FORGE_BIN --list-models "$query" 2>/dev/null | head -n 1
+            $_PI_SHELL_BIN --list-models "$query" 2>/dev/null | head -n 1
         ;;
         *)
             return 1
@@ -132,13 +131,13 @@ function _forge_select_with_query() {
     esac
 }
 
-function _forge_select_with_query_global() {
-    _forge_select_with_query "$@"
+function _pi_select_with_query_global() {
+    _pi_select_with_query "$@"
 }
 
-function _forge_select_model_pair() {
+function _pi_select_model_pair() {
     local result
-    result=$(_forge_select_with_query "$1" model)
+    result=$(_pi_select_with_query "$1" model)
 
     if [[ -z "$result" ]]; then
         reply=()
@@ -149,18 +148,18 @@ function _forge_select_model_pair() {
     [[ ${#reply[@]} -ge 1 ]]
 }
 
-function _forge_select_model_pair_global() {
-    _forge_select_model_pair "$@"
+function _pi_select_model_pair_global() {
+    _pi_select_model_pair "$@"
 }
 
-function _forge_reset() {
+function _pi_reset() {
   BUFFER=""
   CURSOR=0
   zle -I
   zle reset-prompt
 }
 
-function _forge_log() {
+function _pi_log() {
     local level="$1"
     local message="$2"
     local timestamp="\033[90m[$(date '+%H:%M:%S')]\033[0m"
@@ -187,14 +186,14 @@ function _forge_log() {
     esac
 }
 
-function _forge_is_workspace_indexed() {
+function _pi_is_workspace_indexed() {
     return 1
 }
 
-function _forge_start_background_sync() {
+function _pi_start_background_sync() {
     return 0
 }
 
-function _forge_start_background_update() {
+function _pi_start_background_update() {
     return 0
 }

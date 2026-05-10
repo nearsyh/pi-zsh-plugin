@@ -18,39 +18,39 @@
 # Determines whether OSC 133 semantic markers should be emitted.
 # Auto-detection is conservative: only emit for terminals known to support it
 # to avoid garbled output in unsupported terminals.
-# The detection result is cached per session in _FORGE_TERM_OSC133_CACHED
+# The detection result is cached per session in _PI_TERM_OSC133_CACHED
 # ("1" = emit, "0" = don't emit) to avoid repeated detection overhead.
-typeset -g _FORGE_TERM_OSC133_CACHED=""
-function _forge_osc133_should_emit() {
-    if [[ -n "$_FORGE_TERM_OSC133_CACHED" ]]; then
-        [[ "$_FORGE_TERM_OSC133_CACHED" == "1" ]] && return 0 || return 1
+typeset -g _PI_TERM_OSC133_CACHED=""
+function _pi_osc133_should_emit() {
+    if [[ -n "$_PI_TERM_OSC133_CACHED" ]]; then
+        [[ "$_PI_TERM_OSC133_CACHED" == "1" ]] && return 0 || return 1
     fi
-    case "$_FORGE_TERM_OSC133" in
-        on)  _FORGE_TERM_OSC133_CACHED="1"; return 0 ;;
-        off) _FORGE_TERM_OSC133_CACHED="0"; return 1 ;;
+    case "$_PI_TERM_OSC133" in
+        on)  _PI_TERM_OSC133_CACHED="1"; return 0 ;;
+        off) _PI_TERM_OSC133_CACHED="0"; return 1 ;;
         auto)
             # Kitty sets KITTY_PID
-            if [[ -n "${KITTY_PID:-}" ]]; then _FORGE_TERM_OSC133_CACHED="1"; return 0; fi
+            if [[ -n "${KITTY_PID:-}" ]]; then _PI_TERM_OSC133_CACHED="1"; return 0; fi
             # Detect by TERM_PROGRAM
             case "${TERM_PROGRAM:-}" in
-                WezTerm|iTerm.app|vscode|WarpTerminal) _FORGE_TERM_OSC133_CACHED="1"; return 0 ;;
+                WezTerm|iTerm.app|vscode|WarpTerminal) _PI_TERM_OSC133_CACHED="1"; return 0 ;;
             esac
             # Foot terminal
-            if [[ "${TERM:-}" == "foot"* ]]; then _FORGE_TERM_OSC133_CACHED="1"; return 0; fi
+            if [[ "${TERM:-}" == "foot"* ]]; then _PI_TERM_OSC133_CACHED="1"; return 0; fi
             # Ghostty
-            if [[ "${TERM_PROGRAM:-}" == "ghostty" ]]; then _FORGE_TERM_OSC133_CACHED="1"; return 0; fi
+            if [[ "${TERM_PROGRAM:-}" == "ghostty" ]]; then _PI_TERM_OSC133_CACHED="1"; return 0; fi
             # Unknown terminal: don't emit
-            _FORGE_TERM_OSC133_CACHED="0"
+            _PI_TERM_OSC133_CACHED="0"
             return 1
             ;;
-        *)   _FORGE_TERM_OSC133_CACHED="0"; return 1 ;;
+        *)   _PI_TERM_OSC133_CACHED="0"; return 1 ;;
     esac
 }
 
 # Emits an OSC 133 marker if the terminal supports it.
-# Usage: _forge_osc133_emit "A"  or  _forge_osc133_emit "D;0"
-function _forge_osc133_emit() {
-    _forge_osc133_should_emit || return 0
+# Usage: _pi_osc133_emit "A"  or  _pi_osc133_emit "D;0"
+function _pi_osc133_emit() {
+    _pi_osc133_should_emit || return 0
     printf '\e]133;%s\a' "$1"
 }
 
@@ -59,55 +59,55 @@ function _forge_osc133_emit() {
 # ---------------------------------------------------------------------------
 
 # Ring buffer storage uses parallel arrays declared in config.zsh:
-#   _FORGE_TERM_COMMANDS, _FORGE_TERM_EXIT_CODES, _FORGE_TERM_TIMESTAMPS
+#   _PI_TERM_COMMANDS, _PI_TERM_EXIT_CODES, _PI_TERM_TIMESTAMPS
 # Pending command state:
-typeset -g _FORGE_TERM_PENDING_CMD=""
-typeset -g _FORGE_TERM_PENDING_TS=""
+typeset -g _PI_TERM_PENDING_CMD=""
+typeset -g _PI_TERM_PENDING_TS=""
 
 # Called before each command executes.
 # Records the command text and timestamp, emits OSC 133 B+C markers.
-function _forge_context_preexec() {
-    [[ "$_FORGE_TERM" != "true" ]] && return
-    _FORGE_TERM_PENDING_CMD="$1"
-    _FORGE_TERM_PENDING_TS="$(date +%s)"
+function _pi_context_preexec() {
+    [[ "$_PI_TERM" != "true" ]] && return
+    _PI_TERM_PENDING_CMD="$1"
+    _PI_TERM_PENDING_TS="$(date +%s)"
     # OSC 133 B: prompt end / command start
-    _forge_osc133_emit "B"
+    _pi_osc133_emit "B"
     # OSC 133 C: command output start
-    _forge_osc133_emit "C"
+    _pi_osc133_emit "C"
 }
 
 # Called after each command completes, before the next prompt is drawn.
 # Captures exit code, pushes to ring buffer, emits OSC 133 D+A markers.
-function _forge_context_precmd() {
+function _pi_context_precmd() {
     local last_exit=$?  # MUST be first line to capture exit code
 
     # OSC 133 D: command finished with exit code.
     # Emitted unconditionally (before the enabled check) so that terminals
     # relying on paired A/B/C/D markers never receive an unpaired sequence,
     # even when context capture is disabled.
-    _forge_osc133_emit "D;$last_exit"
+    _pi_osc133_emit "D;$last_exit"
 
-    [[ "$_FORGE_TERM" != "true" ]] && return
+    [[ "$_PI_TERM" != "true" ]] && return
 
     # Only record if we have a pending command from preexec
-    if [[ -n "$_FORGE_TERM_PENDING_CMD" ]]; then
-        _FORGE_TERM_COMMANDS+=("$_FORGE_TERM_PENDING_CMD")
-        _FORGE_TERM_EXIT_CODES+=("$last_exit")
-        _FORGE_TERM_TIMESTAMPS+=("$_FORGE_TERM_PENDING_TS")
+    if [[ -n "$_PI_TERM_PENDING_CMD" ]]; then
+        _PI_TERM_COMMANDS+=("$_PI_TERM_PENDING_CMD")
+        _PI_TERM_EXIT_CODES+=("$last_exit")
+        _PI_TERM_TIMESTAMPS+=("$_PI_TERM_PENDING_TS")
 
         # Trim ring buffer to max size
-        while (( ${#_FORGE_TERM_COMMANDS} > _FORGE_TERM_MAX_COMMANDS )); do
-            shift _FORGE_TERM_COMMANDS
-            shift _FORGE_TERM_EXIT_CODES
-            shift _FORGE_TERM_TIMESTAMPS
+        while (( ${#_PI_TERM_COMMANDS} > _PI_TERM_MAX_COMMANDS )); do
+            shift _PI_TERM_COMMANDS
+            shift _PI_TERM_EXIT_CODES
+            shift _PI_TERM_TIMESTAMPS
         done
 
-        _FORGE_TERM_PENDING_CMD=""
-        _FORGE_TERM_PENDING_TS=""
+        _PI_TERM_PENDING_CMD=""
+        _PI_TERM_PENDING_TS=""
     fi
 
     # OSC 133 A: prompt start (for the next prompt)
-    _forge_osc133_emit "A"
+    _pi_osc133_emit "A"
 }
 
 # Hook registration
@@ -115,7 +115,7 @@ function _forge_context_precmd() {
 # Register using standard zsh hook arrays for coexistence with other plugins.
 # precmd is prepended so it runs first and captures the real $? from the
 # command, before other plugins (powerlevel10k, starship, etc.) overwrite it.
-if [[ "$_FORGE_TERM" == "true" ]]; then
-    preexec_functions+=(_forge_context_preexec)
-    precmd_functions=(_forge_context_precmd "${precmd_functions[@]}")
+if [[ "$_PI_TERM" == "true" ]]; then
+    preexec_functions+=(_pi_context_preexec)
+    precmd_functions=(_pi_context_precmd "${precmd_functions[@]}")
 fi

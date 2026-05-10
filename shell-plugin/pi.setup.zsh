@@ -10,11 +10,11 @@ if [[ ! " ${plugins[@]} " =~ " zsh-syntax-highlighting " ]]; then
 fi
 
 # Load pi shell plugin (commands, completions, keybindings) if not already loaded
-if [[ -z "$_FORGE_PLUGIN_LOADED" ]]; then
-    source "${PI_SHELL_PLUGIN_PATH:-${0:A:h}/forge.plugin.zsh}"
+if [[ -z "$_PI_PLUGIN_LOADED" ]]; then
+    source "${PI_SHELL_PLUGIN_PATH:-${0:A:h}/pi.plugin.zsh}"
 fi
 
 # Load pi shell theme (prompt with AI context) if not already loaded
-if [[ -z "$_FORGE_THEME_LOADED" ]]; then
-    source "${PI_SHELL_THEME_PATH:-${0:A:h}/forge.theme.zsh}"
+if [[ -z "$_PI_THEME_LOADED" ]]; then
+    source "${PI_SHELL_THEME_PATH:-${0:A:h}/pi.theme.zsh}"
 fi

@@ -3,16 +3,16 @@
 # Editor and command suggestion action handlers for pi
 
 # Action handler: Open external editor for command composition
-function _forge_action_editor() {
+function _pi_action_editor() {
     local initial_text="$1"
     echo
     
-    # Determine editor in order of preference: PI_EDITOR > FORGE_EDITOR > EDITOR > nano
-    local editor_cmd="${PI_EDITOR:-${FORGE_EDITOR:-${EDITOR:-nano}}}"
+    # Determine editor in order of preference: PI_EDITOR > PI_EDITOR > EDITOR > nano
+    local editor_cmd="${PI_EDITOR:-${PI_EDITOR:-${EDITOR:-nano}}}"
     
     # Validate editor exists
     if ! command -v "${editor_cmd%% *}" &>/dev/null; then
-        _forge_log error "Editor not found: $editor_cmd (set PI_EDITOR or EDITOR)"
+        _pi_log error "Editor not found: $editor_cmd (set PI_EDITOR or EDITOR)"
         return 1
     fi
     
@@ -20,7 +20,7 @@ function _forge_action_editor() {
     local pi_dir=".pi"
     if [[ ! -d "$pi_dir" ]]; then
         mkdir -p "$pi_dir" || {
-            _forge_log error "Failed to create .pi directory"
+            _pi_log error "Failed to create .pi directory"
             return 1
         }
     fi
@@ -28,7 +28,7 @@ function _forge_action_editor() {
     # Create temporary file with git-like naming: PI_EDITMSG.md
     local temp_file="${pi_dir}/PI_EDITMSG.md"
     touch "$temp_file" || {
-        _forge_log error "Failed to create temporary file"
+        _pi_log error "Failed to create temporary file"
         return 1
     }
     
@@ -45,8 +45,8 @@ function _forge_action_editor() {
     local editor_exit_code=$?
     
     if [ $editor_exit_code -ne 0 ]; then
-        _forge_log error "Editor exited with error code $editor_exit_code"
-        _forge_reset
+        _pi_log error "Editor exited with error code $editor_exit_code"
+        _pi_reset
         return 1
     fi
     
@@ -55,7 +55,7 @@ function _forge_action_editor() {
     content=$(cat "$temp_file" | tr -d '\r')
     
     if [ -z "$content" ]; then
-        _forge_log info "Editor closed with no content"
+        _pi_log info "Editor closed with no content"
         BUFFER=""
         CURSOR=0
         zle reset-prompt
@@ -71,11 +71,11 @@ function _forge_action_editor() {
 
 # Action handler: Generate shell command from natural language
 # Usage: :? <description>
-function _forge_action_suggest() {
+function _pi_action_suggest() {
     local description="$1"
     
     if [[ -z "$description" ]]; then
-        _forge_log error "Please provide a command description"
+        _pi_log error "Please provide a command description"
         return 0
     fi
     
@@ -91,6 +91,6 @@ function _forge_action_suggest() {
         CURSOR=${#BUFFER}
         zle reset-prompt
     else
-        _forge_log error "Failed to generate command"
+        _pi_log error "Failed to generate command"
     fi
 }

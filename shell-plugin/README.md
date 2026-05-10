@@ -10,11 +10,9 @@ ZSH helper plugin for `pi`. It maps `:` commands in your shell to `pi -p` calls 
 ## Load
 
 ```zsh
-source /path/to/shell-plugin/forge.plugin.zsh
-source /path/to/shell-plugin/forge.theme.zsh  # optional right prompt
+source /path/to/shell-plugin/pi.plugin.zsh
+source /path/to/shell-plugin/pi.theme.zsh  # optional right prompt
 ```
-
-The filenames keep their old Forge names for compatibility.
 
 ## Usage
 
@@ -45,11 +43,7 @@ export PI_SHELL_SESSION_DIR="$HOME/.pi/agent/shell-sessions"
 export PI_EDITOR="$EDITOR"
 ```
 
-Compatibility aliases still work where practical: `FORGE_BIN`, `FORGE_EDITOR`, `FORGE_TERM*`.
-
 ## Notes
-
-Pi is not Forge, so Forge-specific features are degraded or disabled:
 
 - Agents map to normal pi prompts.
 - Workspace sync is a no-op; pi reads context live from the current directory.
