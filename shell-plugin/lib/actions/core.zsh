@@ -6,8 +6,6 @@ function _pi_action_new() {
     local input_text="$1"
 
     _pi_shell_clear_session
-    _PI_ACTIVE_AGENT="pi"
-
     if [[ -n "$input_text" ]]; then
         _pi_shell_send_prompt "$input_text"
     else

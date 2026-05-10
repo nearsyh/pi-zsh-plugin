@@ -7,12 +7,24 @@ ZSH helper plugin for `pi`. It maps `:` commands in your shell to `pi -p` calls 
 - `zsh`
 - `pi` in `PATH`
 
-## Load
+## Install
+
+### Manual
 
 ```zsh
 source /path/to/shell-plugin/pi.plugin.zsh
 source /path/to/shell-plugin/pi.theme.zsh  # optional right prompt
 ```
+
+### Oh My Zsh custom plugin
+
+Clone or symlink this directory as `$ZSH_CUSTOM/plugins/pi-zsh`, then enable it:
+
+```zsh
+plugins=(... pi-zsh)
+```
+
+The Oh My Zsh entrypoint is `pi-zsh.plugin.zsh`.
 
 ## Usage
 
@@ -22,10 +34,9 @@ source /path/to/shell-plugin/pi.theme.zsh  # optional right prompt
 :new
 :conversation
 :model anthropic/claude-sonnet-4
-:provider anthropic
-:thinking high
 :copy
 :export session.html
+:commit-preview
 ```
 
 Plain `: prompt` sends the prompt to `pi -p --session <session-file>`. The session file is created under `~/.pi/agent/shell-sessions` by default.
@@ -37,15 +48,11 @@ Set before loading the plugin:
 ```zsh
 export PI_BIN="/path/to/pi"
 export PI_MODEL="anthropic/claude-sonnet-4"
-export PI_PROVIDER="anthropic"
-export PI_THINKING="medium"
 export PI_SHELL_SESSION_DIR="$HOME/.pi/agent/shell-sessions"
-export PI_EDITOR="$EDITOR"
 ```
 
 ## Notes
 
-- Agents map to normal pi prompts.
-- Workspace sync is a no-op; pi reads context live from the current directory.
-- `:suggest` asks pi to output a shell command.
+- `:model <model>` sets the model for subsequent plugin-driven pi calls in the current shell.
 - `:commit-preview` asks pi for a commit message and inserts a `git commit` command.
+- `pi.theme.zsh` and `lib/highlight.zsh` are intentionally kept but need updates after session management settles.

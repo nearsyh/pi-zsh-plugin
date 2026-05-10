@@ -44,9 +44,6 @@ function pi-accept-line() {
         ;;
     esac
 
-    _pi_osc133_emit "B"
-    _pi_osc133_emit "C"
-
     case "$user_action" in
         new|n)
             if [[ -n "$input_text" ]]; then
@@ -72,51 +69,11 @@ function pi-accept-line() {
         help)
             _pi_action_help
         ;;
-        agent|a)
-            _pi_action_agent "$input_text"
-        ;;
         conversation|c|resume)
             _pi_action_conversation "$input_text"
         ;;
-        config-model|cm|model|m)
-            _pi_action_session_model "$input_text"
-        ;;
-        provider)
-            _pi_action_session_provider "$input_text"
-        ;;
-        config-reload|cr|model-reset|mr)
-            _pi_action_config_reload
-        ;;
-        reasoning-effort|re|thinking)
-            _pi_action_reasoning_effort "$input_text"
-        ;;
-        config-reasoning-effort|cre)
-            _pi_action_config_reasoning_effort "$input_text"
-        ;;
-        config-commit-model|ccm)
-            _pi_action_commit_model "$input_text"
-        ;;
-        config-suggest-model|csm)
-            _pi_action_suggest_model "$input_text"
-        ;;
-        tools|t)
-            _pi_action_tools
-        ;;
-        config|env|e|settings)
-            _pi_action_config
-        ;;
-        config-edit|ce)
-            _pi_action_config_edit
-        ;;
-        skill)
-            _pi_action_skill
-        ;;
-        edit|ed)
-            _pi_action_editor "$input_text"
-            local action_status=$?
-            _pi_osc133_emit "D;$action_status"
-            _pi_osc133_emit "A"
-            return $action_status
+        model|m)
+            _pi_action_model "$input_text"
         ;;
         commit)
             _pi_action_commit "$input_text"
@@ -124,15 +81,6 @@ function pi-accept-line() {
         commit-preview)
             _pi_action_commit_preview "$input_text"
             local action_status=$?
-            _pi_osc133_emit "D;$action_status"
-            _pi_osc133_emit "A"
-            return $action_status
-        ;;
-        suggest|s)
-            _pi_action_suggest "$input_text"
-            local action_status=$?
-            _pi_osc133_emit "D;$action_status"
-            _pi_osc133_emit "A"
             return $action_status
         ;;
         clone)
@@ -147,17 +95,6 @@ function pi-accept-line() {
         copy)
             _pi_action_copy
         ;;
-        workspace-sync|sync|workspace-init|sync-init|workspace-status|sync-status|workspace-info|sync-info)
-            _pi_action_sync
-        ;;
-        provider-login|login)
-            _pi_shell_set_pending_action "$user_action" "$input_text"
-            _pi_shell_accept_original_line
-        ;;
-        logout)
-            _pi_shell_set_pending_action "$user_action" "$input_text"
-            _pi_shell_accept_original_line
-        ;;
         *)
             _pi_action_default "$user_action" "$input_text"
         ;;
@@ -171,9 +108,6 @@ function pi-accept-line() {
     fi
 
     print -s -- "$original_buffer"
-    _pi_osc133_emit "D;$action_status"
-    _pi_osc133_emit "A"
-
     _pi_reset
     return $action_status
 }

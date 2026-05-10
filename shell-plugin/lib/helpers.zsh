@@ -4,7 +4,7 @@
 
 function _pi_get_commands() {
     if [[ -z "$_PI_COMMANDS" ]]; then
-        _PI_COMMANDS=$'new\ninfo\nsession\nresume\nmodel\nscoped-models\nsettings\nlogin\nlogout\ncopy\ncompact\nexport\nhelp\nedit\nsuggest'
+        _PI_COMMANDS=$'new\ninfo\nsession\nresume\nmodel\ncopy\ncompact\nexport\nhelp\ncommit\ncommit-preview\nclone\nrename\nconversation-rename'
     fi
     echo "$_PI_COMMANDS"
 }
@@ -49,9 +49,7 @@ function _pi_shell_clear_session() {
 
 function _pi_shell_base_cmd() {
     reply=($_PI_SHELL_BIN)
-    [[ -n "$_PI_SESSION_PROVIDER" ]] && reply+=(--provider "$_PI_SESSION_PROVIDER")
     [[ -n "$_PI_SESSION_MODEL" ]] && reply+=(--model "$_PI_SESSION_MODEL")
-    [[ -n "$_PI_SESSION_REASONING_EFFORT" ]] && reply+=(--thinking "$_PI_SESSION_REASONING_EFFORT")
 }
 
 function _pi_shell_print_cmd() {
@@ -96,62 +94,6 @@ function _pi_shell_send_prompt() {
     "${cmd[@]}"
 }
 
-function _pi_select() {
-    case "$1" in
-        command)
-            _pi_get_commands
-        ;;
-        model)
-            $_PI_SHELL_BIN --list-models "${2:-}" 2>/dev/null
-        ;;
-        *)
-            return 1
-        ;;
-    esac
-}
-
-function _pi_select_global() {
-    _pi_select "$@"
-}
-
-function _pi_select_with_query() {
-    local query="$1"
-    shift
-
-    case "$1" in
-        command)
-            _pi_get_commands | grep -i -- "$query" | head -n 1
-        ;;
-        model)
-            $_PI_SHELL_BIN --list-models "$query" 2>/dev/null | head -n 1
-        ;;
-        *)
-            return 1
-        ;;
-    esac
-}
-
-function _pi_select_with_query_global() {
-    _pi_select_with_query "$@"
-}
-
-function _pi_select_model_pair() {
-    local result
-    result=$(_pi_select_with_query "$1" model)
-
-    if [[ -z "$result" ]]; then
-        reply=()
-        return 1
-    fi
-
-    reply=("${result%% *}")
-    [[ ${#reply[@]} -ge 1 ]]
-}
-
-function _pi_select_model_pair_global() {
-    _pi_select_model_pair "$@"
-}
-
 function _pi_reset() {
   BUFFER=""
   CURSOR=0
@@ -186,14 +128,3 @@ function _pi_log() {
     esac
 }
 
-function _pi_is_workspace_indexed() {
-    return 1
-}
-
-function _pi_start_background_sync() {
-    return 0
-}
-
-function _pi_start_background_update() {
-    return 0
-}

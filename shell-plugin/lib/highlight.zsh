@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 
+# TODO: Update highlighting after the simplified command/session model settles.
 # Syntax highlighting configuration for pi shell commands
 # Style the conversation pattern with appropriate highlighting
 # Keywords in yellow, rest in default white

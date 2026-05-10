@@ -33,12 +33,6 @@ function _pi_shell_dispatch_pending_action() {
         compact)
             _pi_action_compact
         ;;
-        provider-login|login)
-            _pi_action_login "$input_text"
-        ;;
-        logout)
-            _pi_action_logout "$input_text"
-        ;;
         *)
             _pi_shell_run_prompt_action "$user_action" "$input_text"
         ;;

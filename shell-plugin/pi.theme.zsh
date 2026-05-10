@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 
+# TODO: Update prompt content after plugin-scoped session metadata lands.
 # Enable prompt substitution for RPROMPT
 setopt PROMPT_SUBST
 

@@ -13,9 +13,6 @@ source "${0:A:h}/lib/highlight.zsh"
 # Core utilities (includes logging)
 source "${0:A:h}/lib/helpers.zsh"
 
-# Terminal context capture (preexec/precmd hooks, OSC 133)
-source "${0:A:h}/lib/context.zsh"
-
 # Pending prompt dispatch outside ZLE
 source "${0:A:h}/lib/pending.zsh"
 
@@ -27,14 +24,14 @@ source "${0:A:h}/lib/actions/core.zsh"
 source "${0:A:h}/lib/actions/config.zsh"
 source "${0:A:h}/lib/actions/conversation.zsh"
 source "${0:A:h}/lib/actions/git.zsh"
-source "${0:A:h}/lib/actions/auth.zsh"
-source "${0:A:h}/lib/actions/editor.zsh"
-source "${0:A:h}/lib/actions/provider.zsh"
 
 # Main dispatcher and widget registration
 source "${0:A:h}/lib/dispatcher.zsh"
 
 # Key bindings and widget registration
 source "${0:A:h}/lib/bindings.zsh"
+
+# Right prompt theme
+source "${0:A:h}/pi.theme.zsh"
 
 _PI_PLUGIN_LOADED=1
