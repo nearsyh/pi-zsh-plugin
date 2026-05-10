@@ -1,32 +1,32 @@
 #!/usr/bin/env zsh
 
-# Editor and command suggestion action handlers
+# Editor and command suggestion action handlers for pi
 
 # Action handler: Open external editor for command composition
 function _forge_action_editor() {
     local initial_text="$1"
     echo
     
-    # Determine editor in order of preference: FORGE_EDITOR > EDITOR > nano
-    local editor_cmd="${FORGE_EDITOR:-${EDITOR:-nano}}"
+    # Determine editor in order of preference: PI_EDITOR > FORGE_EDITOR > EDITOR > nano
+    local editor_cmd="${PI_EDITOR:-${FORGE_EDITOR:-${EDITOR:-nano}}}"
     
     # Validate editor exists
     if ! command -v "${editor_cmd%% *}" &>/dev/null; then
-        _forge_log error "Editor not found: $editor_cmd (set FORGE_EDITOR or EDITOR)"
+        _forge_log error "Editor not found: $editor_cmd (set PI_EDITOR or EDITOR)"
         return 1
     fi
     
-    # Create .forge directory if it doesn't exist
-    local forge_dir=".forge"
-    if [[ ! -d "$forge_dir" ]]; then
-        mkdir -p "$forge_dir" || {
-            _forge_log error "Failed to create .forge directory"
+    # Create .pi directory if it doesn't exist
+    local pi_dir=".pi"
+    if [[ ! -d "$pi_dir" ]]; then
+        mkdir -p "$pi_dir" || {
+            _forge_log error "Failed to create .pi directory"
             return 1
         }
     fi
     
-    # Create temporary file with git-like naming: FORGE_EDITMSG.md
-    local temp_file="${forge_dir}/FORGE_EDITMSG.md"
+    # Create temporary file with git-like naming: PI_EDITMSG.md
+    local temp_file="${pi_dir}/PI_EDITMSG.md"
     touch "$temp_file" || {
         _forge_log error "Failed to create temporary file"
         return 1
@@ -83,7 +83,7 @@ function _forge_action_suggest() {
 
     # Generate the command
     local generated_command
-    generated_command=$(FORCE_COLOR=true CLICOLOR_FORCE=1 _forge_exec suggest "$description")
+    generated_command=$(_pi_shell_send_prompt "Suggest a shell command for this request. Output only the command, no markdown: ${description}")
 
     if [[ -n "$generated_command" ]]; then
         # Replace the buffer with the generated command

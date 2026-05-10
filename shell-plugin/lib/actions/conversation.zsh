@@ -1,162 +1,85 @@
 #!/usr/bin/env zsh
 
-# Conversation management action handlers
-# 
-# Features:
-# - :conversation          - List and switch conversations (with interactive picker)
-# - :conversation <id>     - Switch to specific conversation by ID
-# - :conversation -        - Toggle between current and previous conversation (like cd -)
-# - :clone                 - Clone current or selected conversation
-# - :clone <id>            - Clone specific conversation by ID
-# - :copy                  - Copy last assistant message to OS clipboard as raw markdown
-# - :rename <name>         - Rename the current conversation
-# - :conversation-rename   - Rename a conversation (interactive picker)
-# - :conversation-rename <id> <name> - Rename specific conversation by ID
-#
-# Helper Functions:
-# - _forge_switch_conversation <id>  - Switch to a conversation and track previous
-# - _forge_clear_conversation        - Clear conversation and save as previous
+# Session management action handlers for pi
 
-# Helper function to switch to a conversation and track previous (like cd -)
 function _forge_switch_conversation() {
-    local new_conversation_id="$1"
-    
-    # Only update previous if we're switching to a different conversation
-    if [[ -n "$_FORGE_CONVERSATION_ID" && "$_FORGE_CONVERSATION_ID" != "$new_conversation_id" ]]; then
-        # Save current as previous
-        _FORGE_PREVIOUS_CONVERSATION_ID="$_FORGE_CONVERSATION_ID"
-    fi
-    
-    # Set the new conversation as active
-    _FORGE_CONVERSATION_ID="$new_conversation_id"
+    _pi_shell_set_session_file "$1"
 }
 
-# Helper function to reset/clear conversation and track previous (like cd -)
 function _forge_clear_conversation() {
-    # Save current as previous before clearing
-    if [[ -n "$_FORGE_CONVERSATION_ID" ]]; then
-        _FORGE_PREVIOUS_CONVERSATION_ID="$_FORGE_CONVERSATION_ID"
-    fi
-    
-    # Clear the current conversation
-    _FORGE_CONVERSATION_ID=""
+    _pi_shell_clear_session
 }
 
-# Action handler: List/switch conversations
 function _forge_action_conversation() {
     local input_text="$1"
-    
     echo
-    
-    # Handle toggling to previous conversation (like cd -)
+
     if [[ "$input_text" == "-" ]]; then
-        # Check if there's a previous conversation
-        if [[ -z "$_FORGE_PREVIOUS_CONVERSATION_ID" ]]; then
-            # No previous conversation tracked, show conversation list like :conversation
-            input_text=""
-            # Fall through to the conversation list logic below
-        else
-            # Swap current and previous
-            local temp="$_FORGE_CONVERSATION_ID"
-            _FORGE_CONVERSATION_ID="$_FORGE_PREVIOUS_CONVERSATION_ID"
-            _FORGE_PREVIOUS_CONVERSATION_ID="$temp"
-            
-            # Show conversation content
-            echo
-            _forge_exec conversation show "$_FORGE_CONVERSATION_ID"
-            
-            # Show conversation info
-            _forge_exec conversation info "$_FORGE_CONVERSATION_ID"
-            
-            # Print log about conversation switching
-            _forge_log success "Switched to conversation \033[1m${_FORGE_CONVERSATION_ID}\033[0m"
-            
+        if [[ -z "$_PI_SHELL_PREVIOUS_SESSION_FILE" ]]; then
+            _forge_log error "No previous session tracked"
             return 0
         fi
-    fi
-    
-    # If an ID is provided directly, use it
-    if [[ -n "$input_text" ]]; then
-        local conversation_id="$input_text"
-        
-        # Switch to conversation and track in history
-        _forge_switch_conversation "$conversation_id"
-        
-        # Show conversation content
-        echo
-        _forge_exec conversation show "$conversation_id"
-        
-        # Show conversation info
-        _forge_exec conversation info "$conversation_id"
-        
-        # Print log about conversation switching
-        _forge_log success "Switched to conversation \033[1m${conversation_id}\033[0m"
-        
+
+        local current="$_PI_SHELL_SESSION_FILE"
+        _PI_SHELL_SESSION_FILE="$_PI_SHELL_PREVIOUS_SESSION_FILE"
+        _PI_SHELL_PREVIOUS_SESSION_FILE="$current"
+        _FORGE_CONVERSATION_ID="$_PI_SHELL_SESSION_FILE"
+        _FORGE_PREVIOUS_CONVERSATION_ID="$_PI_SHELL_PREVIOUS_SESSION_FILE"
+        _forge_log success "Switched to session \033[1m${_PI_SHELL_SESSION_FILE}\033[0m"
         return 0
     fi
-    
-    # Use Rust's built-in conversation picker with preview
-    local conversation_id
-    conversation_id=$(_forge_select conversation)
-    
-    if [[ -n "$conversation_id" ]]; then
-        # Switch to conversation and track in history
-        _forge_switch_conversation "$conversation_id"
-        
-        # Show conversation content
-        echo
-        _forge_exec conversation show "$conversation_id"
-        
-        # Show conversation info
-        _forge_exec conversation info "$conversation_id"
-        
-        # Print log about conversation switching
-        _forge_log success "Switched to conversation \033[1m${conversation_id}\033[0m"
+
+    if [[ -n "$input_text" ]]; then
+        _pi_shell_set_session_file "$input_text"
+        _forge_log success "Switched to session \033[1m${_PI_SHELL_SESSION_FILE}\033[0m"
+        return 0
     fi
+
+    if [[ -n "$_PI_SHELL_SESSION_FILE" ]]; then
+        _forge_log info "Current session: $_PI_SHELL_SESSION_FILE"
+    else
+        _forge_log info "No active session"
+    fi
+    _forge_log info "Use :conversation <session-file-or-id> to switch"
 }
 
-# Action handler: Clone conversation
 function _forge_action_clone() {
     local input_text="$1"
-    local clone_target="$input_text"
-    
     echo
-    
-    # Handle explicit clone target if provided
-    if [[ -n "$clone_target" ]]; then
-        _forge_clone_and_switch "$clone_target"
+
+    local source="${input_text:-$_PI_SHELL_SESSION_FILE}"
+    if [[ -z "$source" ]]; then
+        _forge_log error "No active session to clone"
         return 0
     fi
-    
-    # Use Rust's built-in conversation picker
-    local conversation_id
-    conversation_id=$(_forge_select conversation)
-    
-    if [[ -n "$conversation_id" ]]; then
-        _forge_clone_and_switch "$conversation_id"
-    fi
+
+    mkdir -p "$_PI_SHELL_SESSION_DIR" || return 1
+    local target="${_PI_SHELL_SESSION_DIR}/$(date '+%Y%m%d-%H%M%S')-clone-$$.jsonl"
+    cp "$source" "$target" || {
+        _forge_log error "Failed to clone session: $source"
+        return 1
+    }
+
+    _pi_shell_set_session_file "$target"
+    _forge_log success "Cloned and switched to session \033[1m${target}\033[0m"
 }
 
-# Action handler: Copy last assistant message to OS clipboard as raw markdown
-# Usage: :copy
 function _forge_action_copy() {
     echo
 
-    if [[ -z "$_FORGE_CONVERSATION_ID" ]]; then
-        _forge_log error "No active conversation. Start a conversation first or use :conversation to see existing ones"
+    if [[ -z "$_PI_SHELL_SESSION_FILE" ]]; then
+        _forge_log error "No active session"
         return 0
     fi
 
-    # Fetch raw markdown from the last assistant message
     local content
-    content=$($_FORGE_BIN conversation show --md "$_FORGE_CONVERSATION_ID" 2>/dev/null)
+    content=$($_FORGE_BIN --export "$_PI_SHELL_SESSION_FILE" 2>/dev/null)
 
     if [[ -z "$content" ]]; then
-        _forge_log error "No assistant message found in the current conversation"
+        _forge_log error "No session content found"
         return 0
     fi
 
-    # Copy to clipboard (pbcopy on macOS, xclip/xsel on Linux)
     if command -v pbcopy &>/dev/null; then
         echo -n "$content" | pbcopy
     elif command -v xclip &>/dev/null; then
@@ -168,109 +91,17 @@ function _forge_action_copy() {
         return 0
     fi
 
-    # Count lines and bytes for the confirmation message
-    local line_count byte_count
-    line_count=$(echo "$content" | wc -l | tr -d ' ')
-    byte_count=$(echo -n "$content" | wc -c | tr -d ' ')
-
-    _forge_log success "Copied to clipboard \033[90m[${line_count} lines, ${byte_count} bytes]\033[0m"
+    _forge_log success "Copied session export to clipboard"
 }
 
-# Action handler: Rename current conversation
-# Usage: :rename <name>
 function _forge_action_rename() {
-    local input_text="$1"
-
-    echo
-
-    if [[ -z "$_FORGE_CONVERSATION_ID" ]]; then
-        _forge_log error "No active conversation. Start a conversation first or use :conversation to select one"
-        return 0
-    fi
-
-    if [[ -z "$input_text" ]]; then
-        _forge_log error "Usage: :rename <name>"
-        return 0
-    fi
-
-    _forge_exec conversation rename "$_FORGE_CONVERSATION_ID" $input_text
+    _forge_log warning "Rename is not supported for pi shell sessions"
 }
 
-# Action handler: Rename a conversation (interactive picker or by ID)
-# Usage: :conversation-rename [<id> <name>]
 function _forge_action_conversation_rename() {
-    local input_text="$1"
-
-    echo
-
-    # If input looks like "<id> <name>", split and rename directly
-    if [[ -n "$input_text" ]]; then
-        local conversation_id="${input_text%% *}"
-        local new_name="${input_text#* }"
-
-        if [[ "$conversation_id" == "$new_name" ]]; then
-            # Only one arg provided — not enough
-            _forge_log error "Usage: :conversation-rename <id> <name>"
-            return 0
-        fi
-
-        _forge_exec conversation rename "$conversation_id" $new_name
-        return 0
-    fi
-
-    # No args — use Rust's built-in conversation picker
-    local conversation_id
-    conversation_id=$(_forge_select conversation)
-
-    if [[ -n "$conversation_id" ]]; then
-        # Prompt for new name
-        echo -n "Enter new name: "
-        read -r new_name </dev/tty
-
-        if [[ -n "$new_name" ]]; then
-            _forge_exec conversation rename "$conversation_id" $new_name
-        else
-            _forge_log error "No name provided, rename cancelled"
-        fi
-    fi
+    _forge_action_rename
 }
 
-# Helper function to clone and switch to conversation
 function _forge_clone_and_switch() {
-    local clone_target="$1"
-    
-    # Store original conversation ID to check if we're cloning current conversation
-    local original_conversation_id="$_FORGE_CONVERSATION_ID"
-    
-    # Execute clone command
-    _forge_log info "Cloning conversation \033[1m${clone_target}\033[0m"
-    local clone_output
-    clone_output=$($_FORGE_BIN conversation clone "$clone_target" 2>&1)
-    local clone_exit_code=$?
-    
-    if [[ $clone_exit_code -eq 0 ]]; then
-        # Extract new conversation ID from output
-        local new_id=$(echo "$clone_output" | grep -oE '[a-f0-9-]{36}' | tail -1)
-        
-        if [[ -n "$new_id" ]]; then
-            # Switch to cloned conversation and track previous
-            _forge_switch_conversation "$new_id"
-            
-            _forge_log success "└─ Switched to conversation \033[1m${new_id}\033[0m"
-            
-            # Show content and info only if cloning a different conversation (not current one)
-            if [[ "$clone_target" != "$original_conversation_id" ]]; then
-                echo
-                _forge_exec conversation show "$new_id"
-                
-                # Show new conversation info
-                echo
-                _forge_exec conversation info "$new_id"
-            fi
-        else
-            _forge_log error "Failed to extract new conversation ID from clone output"
-        fi
-    else
-        _forge_log error "Failed to clone conversation: $clone_output"
-    fi
+    _forge_action_clone "$@"
 }

@@ -1,20 +1,16 @@
 #!/usr/bin/env zsh
 
-# Provider selection action handlers
+# Provider selection action handlers for pi
 
-# Action handler: Select the provider for the current session.
-# Sets _FORGE_SESSION_PROVIDER in the shell environment so that every
-# subsequent forge invocation uses that provider via --provider flag
-# without touching the permanent global configuration.
 function _forge_action_session_provider() {
     local input_text="$1"
     echo
 
-    local selected
-    selected=$(_forge_select_with_query "$input_text" provider)
-
-    if [[ -n "$selected" ]]; then
-        _FORGE_SESSION_PROVIDER="$selected"
-        _forge_log success "Session provider set to \033[1m${selected}\033[0m"
+    if [[ -z "$input_text" ]]; then
+        _forge_log info "Usage: :provider <provider-name>"
+        return 0
     fi
+
+    _FORGE_SESSION_PROVIDER="$input_text"
+    _forge_log success "Provider set to \033[1m${input_text}\033[0m"
 }

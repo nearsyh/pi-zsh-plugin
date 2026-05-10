@@ -2,7 +2,7 @@
 
 # Documentation in [README.md](./README.md)
 
-# Modular forge plugin - sources all required modules
+# Modular pi shell plugin - sources all required modules
 
 # Configuration variables
 source "${0:A:h}/lib/config.zsh"
@@ -33,3 +33,5 @@ source "${0:A:h}/lib/dispatcher.zsh"
 
 # Key bindings and widget registration
 source "${0:A:h}/lib/bindings.zsh"
+
+_FORGE_PLUGIN_LOADED=1
