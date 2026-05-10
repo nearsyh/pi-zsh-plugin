@@ -10,7 +10,6 @@ Flags:
 
 import json
 import os
-import pty
 import shutil
 import subprocess
 import sys
@@ -34,7 +33,7 @@ def _detect_glow_style():
             return "light" if bg >= 8 else "dark"
         except (ValueError, IndexError):
             pass
-    return "dark"
+    return "light"
 
 
 GLOW_STYLE = _detect_glow_style()
@@ -88,27 +87,15 @@ def _render_markdown(content):
     if not GLOW_BIN:
         return content
     try:
-        master, slave = pty.openpty()
-        proc = subprocess.Popen(
+        result = subprocess.run(
             [GLOW_BIN, "-s", GLOW_STYLE],
-            stdin=subprocess.PIPE,
-            stdout=slave,
-            stderr=slave,
+            input=content,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
-        os.close(slave)
-        proc.stdin.write(content.encode())
-        proc.stdin.close()
-        output = b""
-        while True:
-            chunk = os.read(master, 4096)
-            if not chunk:
-                break
-            output += chunk
-        os.close(master)
-        proc.wait(timeout=5)
-        decoded = output.decode("utf-8", errors="replace")
-        if proc.returncode == 0 and decoded.strip():
-            return decoded
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         pass
     return content
