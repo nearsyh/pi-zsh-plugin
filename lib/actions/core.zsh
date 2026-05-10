@@ -38,9 +38,9 @@ function _pi_action_dump() {
     fi
 
     if [[ -n "$output_file" ]]; then
-        $_PI_SHELL_BIN --export "$_PI_SHELL_SESSION_FILE" "$output_file"
+        ${PI_ZSH_BIN:-pi} --export "$_PI_SHELL_SESSION_FILE" "$output_file"
     else
-        $_PI_SHELL_BIN --export "$_PI_SHELL_SESSION_FILE"
+        ${PI_ZSH_BIN:-pi} --export "$_PI_SHELL_SESSION_FILE"
     fi
 }
 
@@ -54,7 +54,7 @@ function _pi_action_retry() {
 
 function _pi_action_help() {
     echo
-    $_PI_SHELL_BIN --help
+    ${PI_ZSH_BIN:-pi} --help
 }
 
 function _pi_handle_conversation_command() {

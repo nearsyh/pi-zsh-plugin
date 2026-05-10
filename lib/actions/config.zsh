@@ -12,5 +12,5 @@ function _pi_action_model() {
         return 0
     fi
 
-    $_PI_SHELL_BIN --list-models
+    ${PI_ZSH_BIN:-pi} --list-models
 }

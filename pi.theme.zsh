@@ -6,7 +6,8 @@ setopt PROMPT_SUBST
 
 # Returns ZSH-formatted string ready for use in RPROMPT
 function _pi_prompt_info() {
-    local model_part="${_PI_SESSION_MODEL:+ ${_PI_SESSION_MODEL}}"
+    local _model="${_PI_SESSION_MODEL:-${PI_ZSH_MODEL:-}}"
+    local model_part="${_model:+ ${_model}}"
     local session_part="${_PI_SHELL_SESSION_FILE:t}"
     [[ -n "$session_part" ]] && session_part=" ${session_part}"
     echo "%F{cyan}π%f%F{244}${model_part}${session_part}%f"

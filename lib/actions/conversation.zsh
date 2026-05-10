@@ -53,8 +53,9 @@ function _pi_action_clone() {
         return 0
     fi
 
-    mkdir -p "$_PI_ZSH_SESSION_DIR" || return 1
-    local target="${_PI_ZSH_SESSION_DIR}/$(date '+%Y%m%d-%H%M%S')-clone-$$.jsonl"
+    local session_dir="${PI_ZSH_SESSION_DIR:-${PI_CODING_AGENT_SESSION_DIR:-${HOME}/.pi/agent/shell-sessions}}"
+    mkdir -p "$session_dir" || return 1
+    local target="${session_dir}/$(date '+%Y%m%d-%H%M%S')-clone-$$.jsonl"
     cp "$source" "$target" || {
         _pi_log error "Failed to clone session: $source"
         return 1
@@ -73,7 +74,7 @@ function _pi_action_copy() {
     fi
 
     local content
-    content=$($_PI_SHELL_BIN --export "$_PI_SHELL_SESSION_FILE" 2>/dev/null)
+    content=$(${PI_ZSH_BIN:-pi} --export "$_PI_SHELL_SESSION_FILE" 2>/dev/null)
 
     if [[ -z "$content" ]]; then
         _pi_log error "No session content found"

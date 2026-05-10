@@ -4,7 +4,7 @@
 # Records recent command text, exit code, cwd, and timestamp for this shell only.
 
 function _pi_history_preexec() {
-    [[ "$_PI_ZSH_HISTORY_ENABLED" != "true" ]] && return 0
+    [[ "${PI_ZSH_HISTORY_ENABLED:-true}" != "true" ]] && return 0
     _PI_HISTORY_PENDING_CMD="$1"
     _PI_HISTORY_PENDING_CWD="$PWD"
     _PI_HISTORY_PENDING_TS="$(date '+%Y-%m-%d %H:%M:%S')"
@@ -13,7 +13,7 @@ function _pi_history_preexec() {
 function _pi_history_precmd() {
     local last_exit=$?
 
-    [[ "$_PI_ZSH_HISTORY_ENABLED" != "true" ]] && return 0
+    [[ "${PI_ZSH_HISTORY_ENABLED:-true}" != "true" ]] && return 0
     [[ -z "$_PI_HISTORY_PENDING_CMD" ]] && return 0
 
     _PI_HISTORY_COMMANDS+=("$_PI_HISTORY_PENDING_CMD")
@@ -21,7 +21,7 @@ function _pi_history_precmd() {
     _PI_HISTORY_CWDS+=("$_PI_HISTORY_PENDING_CWD")
     _PI_HISTORY_TIMESTAMPS+=("$_PI_HISTORY_PENDING_TS")
 
-    while (( ${#_PI_HISTORY_COMMANDS} > _PI_ZSH_HISTORY_MAX_COMMANDS )); do
+    while (( ${#_PI_HISTORY_COMMANDS} > ${PI_ZSH_HISTORY_MAX_COMMANDS:-5} )); do
         shift _PI_HISTORY_COMMANDS
         shift _PI_HISTORY_EXIT_CODES
         shift _PI_HISTORY_CWDS
@@ -34,7 +34,7 @@ function _pi_history_precmd() {
 }
 
 function _pi_history_recent_context() {
-    [[ "$_PI_ZSH_HISTORY_ENABLED" != "true" ]] && return 0
+    [[ "${PI_ZSH_HISTORY_ENABLED:-true}" != "true" ]] && return 0
     (( ${#_PI_HISTORY_COMMANDS} == 0 )) && return 0
 
     echo "Recent shell commands from this zsh session:"
@@ -45,7 +45,7 @@ function _pi_history_recent_context() {
     done
 }
 
-if [[ "$_PI_ZSH_HISTORY_ENABLED" == "true" ]]; then
+if [[ "${PI_ZSH_HISTORY_ENABLED:-true}" == "true" ]]; then
     preexec_functions+=(_pi_history_preexec)
     precmd_functions=(_pi_history_precmd "${precmd_functions[@]}")
 fi

@@ -14,14 +14,15 @@ function _pi_shell_ensure_session_file() {
         return 0
     fi
 
-    mkdir -p "$_PI_ZSH_SESSION_DIR" || {
-        _pi_log error "Failed to create session directory: $_PI_ZSH_SESSION_DIR"
+    local session_dir="${PI_ZSH_SESSION_DIR:-${PI_CODING_AGENT_SESSION_DIR:-${HOME}/.pi/agent/shell-sessions}}"
+    mkdir -p "$session_dir" || {
+        _pi_log error "Failed to create session directory: $session_dir"
         return 1
     }
 
     local timestamp
     timestamp="$(date '+%Y%m%d-%H%M%S')"
-    _PI_SHELL_SESSION_FILE="${_PI_ZSH_SESSION_DIR}/${timestamp}-$$.jsonl"
+    _PI_SHELL_SESSION_FILE="${session_dir}/${timestamp}-$$.jsonl"
     _PI_CONVERSATION_ID="$_PI_SHELL_SESSION_FILE"
 }
 
@@ -48,8 +49,8 @@ function _pi_shell_clear_session() {
 }
 
 function _pi_shell_base_cmd() {
-    reply=($_PI_SHELL_BIN)
-    [[ -n "$_PI_SESSION_MODEL" ]] && reply+=(--model "$_PI_SESSION_MODEL")
+    reply=(${PI_ZSH_BIN:-pi})
+    [[ -n "${_PI_SESSION_MODEL:-${PI_ZSH_MODEL:-}}" ]] && reply+=(--model "${_PI_SESSION_MODEL:-${PI_ZSH_MODEL:-}}")
 }
 
 function _pi_shell_print_cmd() {
