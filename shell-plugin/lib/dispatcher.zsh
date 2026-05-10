@@ -14,7 +14,8 @@ function _forge_action_default() {
         return 0
     fi
 
-    _pi_shell_accept_prompt_as_command "$input_text"
+    _pi_shell_set_pending_action "$user_action" "$input_text"
+    _pi_shell_accept_original_line
 }
 
 function forge-accept-line() {
@@ -48,7 +49,12 @@ function forge-accept-line() {
 
     case "$user_action" in
         new|n)
-            _forge_action_new "$input_text"
+            if [[ -n "$input_text" ]]; then
+                _pi_shell_set_pending_action "$user_action" "$input_text"
+                _pi_shell_accept_original_line
+            else
+                _forge_action_new "$input_text"
+            fi
         ;;
         info|i|session)
             _forge_action_info
@@ -57,7 +63,8 @@ function forge-accept-line() {
             _forge_action_dump "$input_text"
         ;;
         compact)
-            _forge_action_compact
+            _pi_shell_set_pending_action "$user_action" "$input_text"
+            _pi_shell_accept_original_line
         ;;
         retry|r)
             _forge_action_retry
@@ -144,10 +151,12 @@ function forge-accept-line() {
             _forge_action_sync
         ;;
         provider-login|login)
-            _forge_action_login "$input_text"
+            _pi_shell_set_pending_action "$user_action" "$input_text"
+            _pi_shell_accept_original_line
         ;;
         logout)
-            _forge_action_logout "$input_text"
+            _pi_shell_set_pending_action "$user_action" "$input_text"
+            _pi_shell_accept_original_line
         ;;
         *)
             _forge_action_default "$user_action" "$input_text"

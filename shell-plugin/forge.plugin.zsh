@@ -16,6 +16,9 @@ source "${0:A:h}/lib/helpers.zsh"
 # Terminal context capture (preexec/precmd hooks, OSC 133)
 source "${0:A:h}/lib/context.zsh"
 
+# Pending prompt dispatch outside ZLE
+source "${0:A:h}/lib/pending.zsh"
+
 # Completion widget
 source "${0:A:h}/lib/completion.zsh"
 

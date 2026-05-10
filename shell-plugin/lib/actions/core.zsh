@@ -9,7 +9,7 @@ function _forge_action_new() {
     _FORGE_ACTIVE_AGENT="pi"
 
     if [[ -n "$input_text" ]]; then
-        _pi_shell_accept_prompt_as_command "$input_text"
+        _pi_shell_send_prompt "$input_text"
     else
         echo
         _forge_log success "Started new pi session"
@@ -69,5 +69,5 @@ function _forge_handle_conversation_command() {
         return 0
     fi
 
-    _pi_shell_accept_prompt_as_command "$command_text $*"
+    _pi_shell_send_prompt "$command_text $*"
 }
