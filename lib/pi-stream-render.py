@@ -8,12 +8,15 @@ Flags:
   --text-only    Only output the final text content (for programmatic capture).
 """
 
+import fcntl
 import json
 import os
 import pty
 import shutil
+import struct
 import subprocess
 import sys
+import termios
 import threading
 
 PI_SHOW_THINKING = os.environ.get("PI_SHOW_THINKING", "true").lower() not in (
@@ -95,8 +98,16 @@ def _render_markdown(content):
         return content
     try:
         master, slave = pty.openpty()
+        # Match PTY size to actual terminal so glow wraps correctly
+        try:
+            size = shutil.get_terminal_size()
+            winsize = struct.pack('HHHH', size.lines, size.columns, 0, 0)
+            fcntl.ioctl(slave, termios.TIOCSWINSZ, winsize)
+        except (OSError, ValueError):
+            pass
+        _cols = min(shutil.get_terminal_size().columns or 80, 120)
         proc = subprocess.Popen(
-            [GLOW_BIN, "-s", GLOW_STYLE],
+            [GLOW_BIN, "-s", GLOW_STYLE, "-w", str(_cols)],
             stdin=subprocess.PIPE,
             stdout=slave,
             stderr=slave,
@@ -132,7 +143,11 @@ def _flush_thinking(outfile, state):
         spinner = state["spinner"]
         spinner.stop()
         spinner.label = SPINNER_LABEL
-        rendered = _render_markdown("> " + state["thinking_buffer"])
+        # Normalize LLM thinking newlines: keep paragraph breaks,
+        # collapse single mid-sentence newlines to spaces
+        raw = state["thinking_buffer"]
+        normalized = raw.replace("\n\n", "\x00PARA\x00").replace("\n", " ").replace("\x00PARA\x00", "\n\n")
+        rendered = _render_markdown("> " + normalized)
         outfile.write(rendered)
         state["thinking_buffer"] = ""
     else:
@@ -264,6 +279,8 @@ def render_stream(infile, outfile):
             elif "path" in args:
                 summary = args["path"]
             if summary:
+                if len(summary) >= 30:
+                    summary = summary[:27] + '...'
                 outfile.write(f"\n{DIM}  \U0001f527 {tool_name}: {summary}{RESET}\n")
             else:
                 outfile.write(f"\n{DIM}  \U0001f527 {tool_name}{RESET}\n")

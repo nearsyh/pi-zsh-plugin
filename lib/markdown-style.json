@@ -3,8 +3,7 @@
     "margin": 1
   },
   "block_quote": {
-    "indent": 1,
-    "indent_token": "│ ",
+    "indent_token": "",
     "color": "15",
     "block_suffix": "\n"
   },
@@ -92,8 +91,8 @@
   "code": {
     "prefix": " ",
     "suffix": " ",
-    "color": "5",
-    "background_color": "7"
+    "color": "4",
+    "background_color": "15"
   },
   "code_block": {
     "margin": 2
