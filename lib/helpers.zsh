@@ -14,14 +14,14 @@ function _pi_shell_ensure_session_file() {
         return 0
     fi
 
-    mkdir -p "$_PI_SHELL_SESSION_DIR" || {
-        _pi_log error "Failed to create session directory: $_PI_SHELL_SESSION_DIR"
+    mkdir -p "$_PI_ZSH_SESSION_DIR" || {
+        _pi_log error "Failed to create session directory: $_PI_ZSH_SESSION_DIR"
         return 1
     }
 
     local timestamp
     timestamp="$(date '+%Y%m%d-%H%M%S')"
-    _PI_SHELL_SESSION_FILE="${_PI_SHELL_SESSION_DIR}/${timestamp}-$$.jsonl"
+    _PI_SHELL_SESSION_FILE="${_PI_ZSH_SESSION_DIR}/${timestamp}-$$.jsonl"
     _PI_CONVERSATION_ID="$_PI_SHELL_SESSION_FILE"
 }
 

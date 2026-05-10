@@ -138,7 +138,7 @@ Recommended policy for missing session:
 - [ ] **Step 1: Add configuration variables near top of file**
 
 ```zsh
-typeset -h _PI_BIN="${PI_BIN:-pi}"
+typeset -h _PI_ZSH_BIN="${PI_ZSH_BIN:-pi}"
 typeset -h _PI_ZSH_STATE_DIR="${PI_ZSH_PLUGIN_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/pi-zsh-plugin}"
 ```
 
@@ -146,7 +146,7 @@ typeset -h _PI_ZSH_STATE_DIR="${PI_ZSH_PLUGIN_STATE_DIR:-${XDG_STATE_HOME:-$HOME
 
 ```zsh
 function _pi_exec() {
-  "$_PI_BIN" "$@"
+  "$_PI_ZSH_BIN" "$@"
 }
 ```
 
@@ -498,7 +498,7 @@ Each working directory gets its own plugin session directory and metadata file. 
 - [ ] **Step 4: Document environment variables**
 
 ```markdown
-- `PI_BIN`: pi executable to run. Defaults to `pi`.
+- `PI_ZSH_BIN`: pi executable to run. Defaults to `pi`.
 - `PI_ZSH_PLUGIN_STATE_DIR`: plugin state/session directory. Defaults to `${XDG_STATE_HOME:-~/.local/state}/pi-zsh-plugin`.
 ```
 
