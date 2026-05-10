@@ -11,6 +11,7 @@ Flags:
 import json
 import os
 import sys
+import threading
 
 PI_SHOW_THINKING = os.environ.get("PI_SHOW_THINKING", "true").lower() not in (
     "false",
@@ -21,6 +22,45 @@ TEXT_ONLY = "--text-only" in sys.argv
 
 DIM = "\033[90m"
 RESET = "\033[0m"
+SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+SPINNER_LABEL = " Working ..."
+
+
+class Spinner:
+    """Background spinner animation shown while waiting for stream data."""
+
+    def __init__(self, outfile):
+        self.outfile = outfile
+        self._stop = threading.Event()
+        self._thread = None
+        self.active = False
+
+    def start(self):
+        if self.active or TEXT_ONLY:
+            return
+        self.active = True
+        self._stop.clear()
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def _run(self):
+        i = 0
+        while not self._stop.wait(0.08):
+            frame = SPINNER_FRAMES[i % len(SPINNER_FRAMES)]
+            self.outfile.write(f"\r\033[94m{frame}{SPINNER_LABEL}{RESET}")
+            self.outfile.flush()
+            i += 1
+
+    def stop(self):
+        if not self.active:
+            return
+        self._stop.set()
+        if self._thread:
+            self._thread.join()
+            self._thread = None
+        self.active = False
+        self.outfile.write("\r\033[K")
+        self.outfile.flush()
 
 
 def render_stream(infile, outfile):
@@ -29,6 +69,8 @@ def render_stream(infile, outfile):
     turns = 0
     text_started = False
     last_text_end_content = None
+    spinner = Spinner(outfile)
+    spinner.start()
 
     for line in infile:
         line = line.strip()
@@ -52,6 +94,7 @@ def render_stream(infile, outfile):
             inner_type = msg_event.get("type", "")
 
             if inner_type == "thinking_start":
+                spinner.stop()
                 in_thinking = True
                 if PI_SHOW_THINKING and not TEXT_ONLY:
                     outfile.write(DIM)
@@ -70,8 +113,10 @@ def render_stream(infile, outfile):
                     outfile.write(RESET + "\n\n")
                     outfile.flush()
                     thinking_shown = False
+                spinner.start()
 
             elif inner_type == "text_start":
+                spinner.stop()
                 # End thinking mode when text content begins
                 if in_thinking and thinking_shown and not TEXT_ONLY:
                     outfile.write(RESET + "\n\n")
@@ -94,8 +139,10 @@ def render_stream(infile, outfile):
                     if content and not content.endswith("\n"):
                         outfile.write("\n")
                     outfile.flush()
+                spinner.start()
 
         elif event_type == "tool_execution_start" and not TEXT_ONLY:
+            spinner.stop()
             tool_name = event.get("toolName", "tool")
             args = event.get("args", {})
             summary = ""
@@ -108,6 +155,9 @@ def render_stream(infile, outfile):
             else:
                 outfile.write(f"\n{DIM}  \U0001f527 {tool_name}{RESET}\n")
             outfile.flush()
+            spinner.start()
+
+    spinner.stop()
 
     # In text-only mode, emit the last text content at the end
     if TEXT_ONLY and last_text_end_content is not None:
