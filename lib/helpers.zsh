@@ -83,6 +83,11 @@ function _pi_shell_command_line() {
 
 function _pi_shell_accept_original_line() {
     _PI_SHELL_ACCEPTED_LINE=1
+    # Replace buffer with just ':' so the command_not_found_handler
+    # swallows it cleanly. This avoids glob expansion errors from
+    # special characters (e.g. ?, !, &, |) in the original input,
+    # and prevents multi-line content from being re-parsed.
+    BUFFER=":"
     zle accept-line
 }
 

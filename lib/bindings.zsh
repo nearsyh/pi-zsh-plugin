@@ -36,10 +36,17 @@ function pi-bracketed-paste() {
 
 # Re-applied after zsh-vi-mode's `zvm_init` precmd hook, which rebuilds the
 # main/viins/vicmd keymaps and otherwise silently clobbers these bindings.
+# Insert a literal newline into the buffer (Ctrl+J or Ctrl+O)
+function _pi-insert-newline() {
+    LBUFFER+=$'\n'
+}
+zle -N _pi-insert-newline
+
 function _pi_apply_keybindings() {
     zle -N bracketed-paste pi-bracketed-paste
     bindkey '^M' pi-accept-line
-    bindkey '^J' pi-accept-line
+    bindkey '^J' _pi-insert-newline
+    bindkey '^O' _pi-insert-newline
     bindkey '^I' pi-completion
 }
 

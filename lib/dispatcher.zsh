@@ -23,16 +23,29 @@ function pi-accept-line() {
     local user_action=""
     local input_text=""
 
-    if [[ "$BUFFER" =~ "^:([a-zA-Z][a-zA-Z0-9_-]*)( (.*))?$" ]]; then
-        user_action="${match[1]}"
-        if [[ -n "${match[2]}" ]]; then
+    # Match :<command> [args] — uses parameter expansion to handle
+    # multi-line content and special characters (e.g. ?, !, &, |) that
+    # would break =~ with $ anchors or cause glob expansion errors.
+    if [[ "$BUFFER" == :* ]]; then
+        local rest="${BUFFER#:}"
+        # :word... — check if rest starts with a known action word
+        # Uses (#s) start anchor and captures through end-of-string,
+        # working correctly with multi-line content.
+        if [[ "$rest" = (#b)([a-zA-Z][a-zA-Z0-9_-]#)( )(*) ]]; then
+            user_action="${match[1]}"
             input_text="${match[3]}"
-        else
+        elif [[ "$rest" = (#b)([a-zA-Z][a-zA-Z0-9_-]#) ]]; then
+            user_action="${match[1]}"
             input_text=""
+        elif [[ "$rest" == " "* ]]; then
+            # : <text> — plain prompt, capture everything after leading space
+            user_action=""
+            input_text="${rest# }"
+        else
+            # Unknown colon prefix, pass through to normal shell
+            zle accept-line
+            return
         fi
-    elif [[ "$BUFFER" =~ "^: (.*)$" ]]; then
-        user_action=""
-        input_text="${match[1]}"
     else
         zle accept-line
         return
