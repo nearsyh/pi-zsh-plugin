@@ -1,14 +1,16 @@
 {
   "document": {
-    "block_prefix": "\n",
-    "block_suffix": "\n",
-    "margin": 2
+    "margin": 1
   },
   "block_quote": {
     "indent": 1,
-    "indent_token": "│ "
+    "indent_token": "│ ",
+    "color": "15",
+    "block_suffix": "\n"
   },
-  "paragraph": {},
+  "paragraph": {
+    "margin": 0
+  },
   "list": {
     "level_indent": 2
   },

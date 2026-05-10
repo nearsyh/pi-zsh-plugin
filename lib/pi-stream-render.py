@@ -132,8 +132,8 @@ def _flush_thinking(outfile, state):
         spinner = state["spinner"]
         spinner.stop()
         spinner.label = SPINNER_LABEL
-        rendered = _render_markdown(state["thinking_buffer"])
-        outfile.write(DIM + rendered + RESET)
+        rendered = _render_markdown("> " + state["thinking_buffer"])
+        outfile.write(rendered)
         state["thinking_buffer"] = ""
     else:
         outfile.write(RESET + "\n\n")
