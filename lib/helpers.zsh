@@ -95,10 +95,11 @@ function _pi_shell_prompt_with_history() {
         return 0
     fi
 
-    REPLY="${history_context}
+    REPLY="${prompt}
 
-User prompt:
-${prompt}"
+<recent-zsh-commands>
+${history_context}
+</recent-zsh-commands>"
 }
 
 function _pi_shell_send_prompt() {
