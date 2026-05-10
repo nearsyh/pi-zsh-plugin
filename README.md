@@ -59,3 +59,7 @@ export PI_ZSH_HISTORY_ENABLED=true
 - Set `PI_ZSH_HISTORY_MAX_COMMANDS` to control how many recent commands are included. Set `PI_ZSH_HISTORY_ENABLED=false` to disable this.
 - `:commit-preview` asks pi for a commit message and inserts a `git commit` command.
 - `pi.theme.zsh` and `lib/highlight.zsh` are intentionally kept but need updates after session management settles.
+
+## Credits
+
+The `:` prefix system was inspired by [ForgeCode](https://github.com/tailcallhq/forgecode#zsh-plugin-the--prefix-system).
