@@ -12,7 +12,7 @@ ZSH helper plugin for `pi`. It maps `:` commands in your shell to `pi -p` calls 
 ### Manual
 
 ```zsh
-source /path/to/pi-zsh/pi.plugin.zsh
+source /path/to/pi-zsh/pi-zsh.plugin.zsh
 ```
 
 ### Oh My Zsh custom plugin
