@@ -83,11 +83,18 @@ function _pi_shell_command_line() {
 
 function _pi_shell_accept_original_line() {
     _PI_SHELL_ACCEPTED_LINE=1
-    # Replace buffer with just ':' so the command_not_found_handler
-    # swallows it cleanly. This avoids glob expansion errors from
-    # special characters (e.g. ?, !, &, |) in the original input,
-    # and prevents multi-line content from being re-parsed.
-    BUFFER=":"
+    # For multi-line content, replace buffer with ':' to prevent
+    # individual lines from being re-parsed as separate commands.
+    if [[ $BUFFER == *$'\n'* ]]; then
+        BUFFER=":"
+    fi
+    # Temporarily disable nomatch and banghist so special characters
+    # (e.g. ?, *, !) in the user's input don't cause errors.
+    # Options are restored in _pi_shell_pending_precmd.
+    _PI_SHELL_RESTORE_NOMATCH=0
+    _PI_SHELL_RESTORE_BANGHIST=0
+    [[ -o nomatch ]] && { _PI_SHELL_RESTORE_NOMATCH=1; setopt no_nomatch; }
+    [[ -o banghist ]] && { _PI_SHELL_RESTORE_BANGHIST=1; setopt no_banghist; }
     zle accept-line
 }
 

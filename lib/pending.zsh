@@ -40,6 +40,11 @@ function _pi_shell_dispatch_pending_action() {
 }
 
 function _pi_shell_pending_precmd() {
+    # Restore options that were temporarily disabled by
+    # _pi_shell_accept_original_line to handle special characters.
+    (( _PI_SHELL_RESTORE_NOMATCH )) && { _PI_SHELL_RESTORE_NOMATCH=0; setopt nomatch; }
+    (( _PI_SHELL_RESTORE_BANGHIST )) && { _PI_SHELL_RESTORE_BANGHIST=0; setopt banghist; }
+
     [[ -z "$_PI_SHELL_PENDING_ACTION" && -z "$_PI_SHELL_PENDING_INPUT" ]] && return 0
     _pi_shell_dispatch_pending_action
 }

@@ -16,6 +16,9 @@ typeset -h _PI_SHELL_PREVIOUS_SESSION_FILE=""
 typeset -h _PI_SHELL_PENDING_ACTION=""
 typeset -h _PI_SHELL_PENDING_INPUT=""
 
+typeset -g _PI_SHELL_RESTORE_NOMATCH=0
+typeset -g _PI_SHELL_RESTORE_BANGHIST=0
+
 
 typeset -h _PI_HISTORY_PENDING_CMD=""
 typeset -h _PI_HISTORY_PENDING_CWD=""

@@ -1,9 +1,8 @@
 #!/usr/bin/env zsh
 
 # Silently swallow :xxx commands that reach shell execution.
-# All :xxx inputs are intercepted by the pi-accept-line ZLE widget;
-# this handler only fires for the intentional pass-through via
-# _pi_shell_accept_original_line, keeping the original display intact.
+# This handles unrecognized colon-prefixed inputs that pass through
+# the else branch in pi-accept-line (no known action word, no leading space).
 function command_not_found_handler() {
     if [[ "$1" == :* ]]; then
         return 0
