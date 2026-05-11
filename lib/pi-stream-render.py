@@ -146,8 +146,9 @@ def _flush_thinking(outfile, state):
         # Normalize LLM thinking newlines: keep paragraph breaks,
         # collapse single mid-sentence newlines to spaces
         raw = state["thinking_buffer"]
-        normalized = raw.replace("\n\n", "\x00PARA\x00").replace("\n", " ").replace("\x00PARA\x00", "\n\n")
-        rendered = _render_markdown("> " + normalized)
+
+        lines = ["> " + line for line in ("Thinking: " + raw).split("\n")]
+        rendered = _render_markdown("\n".join(lines))
         outfile.write(rendered)
         state["thinking_buffer"] = ""
     else:
@@ -226,8 +227,6 @@ def render_stream(infile, outfile):
             elif inner_type == "thinking_delta":
                 if PI_SHOW_THINKING and not TEXT_ONLY:
                     delta = msg_event.get("delta", "")
-                    if state["thinking_buffer"] == "":
-                        state["thinking_buffer"] = "Thinking: "
                     if GLOW_BIN:
                         state["thinking_buffer"] += delta
                     else:
